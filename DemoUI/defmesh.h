@@ -41,7 +41,7 @@ public:
 
     void setMotion(Motion *inMotion) { motion = inMotion; }
     Motion *getMotion() const { return motion; }
-    void updateIfHasMotion() const { if(motion) updateMesh(); }
+    void updateIfHasMotion() const { if(motion) updateMesh(); } // never activated
 
     vector<Vector3> getSkel() const;
     const Skeleton &getOrigSkel() const { return origSkel; }
@@ -56,15 +56,15 @@ private:
     void updateMesh() const;
 
     Skeleton origSkel;
-    vector<Vector3> match;
+    vector<Vector3> match; // vector<Vector3> o.embedding, size is 18
     Attachment attachment;
     Mesh origMesh;
-    mutable Mesh curMesh;
-    vector<Quaternion<> > transforms;
     Motion *motion;
+    mutable Mesh curMesh; // const function could change this
+    vector<Quaternion<> > transforms;
 
     vector<double> footOffsets;
-    mutable MotionFilter filter; // use mutable in order to let getSkel() modify it, TODO: 这里好奇怪，filter并没有给参数，但是motionfilter class中是不带默认构造函数的。。。
-}; 
+    mutable MotionFilter filter; // const function getSkel() could change it, TODO: 这里好奇怪，filter并没有给参数，但是motionfilter class中是不带默认构造函数的。。。
+};
 
 #endif //DEFMESH_H_INCLUDED

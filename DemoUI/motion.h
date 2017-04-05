@@ -29,22 +29,22 @@ class Motion
 {
 public:
     Motion(const string &filename);
-    void get_size() {std::vector<Vector3> p = poses[0];std::cout << refPose.size();}
+    void get_size() {std::vector<Vector3> p = poses[0];}
 
     bool empty() const { return data.empty(); }
-    vector<Transform<> > get() const;
-    vector<Vector3> getPose() const;
+    vector<Transform<> > get() const { return data[getFrameIdx()]; }
+    vector<Vector3> getPose() const { return poses[getFrameIdx()]; }
     vector<Vector3> getRefPose() const { return refPose; }
     double getLegLength() const { return legLength; }
     double getLegWidth() const { return legWidth; }
 
-    const vector<vector<Transform<> > > &getData() const { return data; }
+    const vector<vector<Transform<> > > &getData() const { return data; } // not activated
     void setFixedFrame(int inFrame) { fixedFrame = inFrame < 0 ? -1 : (int)(inFrame % data.size()); }
 private:
     int getFrameIdx() const;
     void readH(istream &strm);
     vector<vector<Transform<> > > data;
-    vector<vector<Vector3> > poses; // 每个里面放了36个点。。。
+    vector<vector<Vector3> > poses; // every pose has 36 points
     vector<Vector3> refPose; // 放了19个点, TODO: why?
     double legLength;
     double legWidth;

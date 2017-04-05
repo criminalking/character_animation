@@ -87,44 +87,44 @@ public:
     
 private:
     Quaternion(const Real &inR, const Vector<Real, 3> &inV) : r(inR), v(inV) {}
-    
+
     Real r;
     Vector<Real, 3> v;
 };
 
 template<class Real = double> class Transform { //T(v) = (rot * v * scale) + trans
-public:
-    typedef Vector<Real, 3> Vec;
+ public:
+ typedef Vector<Real, 3> Vec;
 
-    Transform() : scale(1.) {}
-    explicit Transform(const Real &inScale) : scale(inScale) {}
-    explicit Transform(const Vec &inTrans) : scale(1.), trans(inTrans) {}
-    Transform(const Quaternion<Real> &inRot, Real inScale = Real(1.), Vec inTrans = Vec()) : rot(inRot), scale(inScale), trans(inTrans) {}
-    Transform(const Transform &t) : rot(t.rot), scale(t.scale), trans(t.trans) {}
-    
-    Transform operator*(const Transform &t) const { return Transform(rot * t.rot, scale * t.scale, trans + rot * (scale * t.trans)); }
-    Vec operator*(const Vec &v) const { return rot * (v * scale) + trans; }
-    
-    Transform inverse() const { return Transform(rot.inverse(), 1. / scale, rot.inverse() * -trans * (1. / scale)); }
-    
-    Transform linearComponent() const { return Transform(rot, scale); }
-    Vec mult3(const Vec &v) const { return rot * (v * scale); }
-    
-    Real getScale() const { return scale; }
-    Vec getTrans() const { return trans; }
-    Quaternion<Real> getRot() const { return rot; }
-    
-private:
-    Quaternion<Real> rot;
-    Real scale;
-    Vec trans;
+ Transform() : scale(1.) {}
+ explicit Transform(const Real &inScale) : scale(inScale) {}
+ explicit Transform(const Vec &inTrans) : scale(1.), trans(inTrans) {}
+ Transform(const Quaternion<Real> &inRot, Real inScale = Real(1.), Vec inTrans = Vec()) : rot(inRot), scale(inScale), trans(inTrans) {}
+ Transform(const Transform &t) : rot(t.rot), scale(t.scale), trans(t.trans) {}
+
+ Transform operator*(const Transform &t) const { return Transform(rot * t.rot, scale * t.scale, trans + rot * (scale * t.trans)); }
+ Vec operator*(const Vec &v) const { return rot * (v * scale) + trans; }
+
+ Transform inverse() const { return Transform(rot.inverse(), 1. / scale, rot.inverse() * -trans * (1. / scale)); } // trans's inverse is not -trans here, because if we use this new transform, we still put this trans at last
+
+ Transform linearComponent() const { return Transform(rot, scale); }
+ Vec mult3(const Vec &v) const { return rot * (v * scale); }
+
+ Real getScale() const { return scale; }
+ Vec getTrans() const { return trans; }
+ Quaternion<Real> getRot() const { return rot; }
+
+ private:
+ Quaternion<Real> rot;
+ Real scale;
+ Vec trans;
 };
 
 template<class Real = double> class Matrix3 {
 public:
     typedef Vector<Real, 3> Vec;
     typedef Matrix3<Real> Self;
-    
+
     Matrix3(const Real &diag = Real()) { m[0] = m[4] = m[8] = diag; m[1] = m[2] = m[3] = m[5] = m[6] = m[7] = Real(); }
     Matrix3(const Vec &c1, const Vec &c2, const Vec &c3) {
         m[0] = c1[0]; m[1] = c2[0]; m[2] = c3[0];
@@ -132,15 +132,15 @@ public:
         m[6] = c1[2]; m[7] = c2[2]; m[8] = c3[2];
     }
     Matrix3(const Self &inM) { for(int i = 0; i < 9; ++i) m[i] = inM[i]; }
-    
+
     Real &operator[](int idx) { return m[idx]; }
     const Real &operator[](int idx) const { return m[idx]; }
     Real &operator()(int row, int col) { return m[row * 3 + col]; }
     const Real &operator()(int row, int col) const { return m[row * 3 + col]; }
-    
+
     Vec getRow(int row) const { row *= 3; return Vec(m[row], m[row + 1], m[row + 2]); }
     Vec getColumn(int col) const { return Vec(m[col], m[col + 3], m[col + 6]); }
-    
+
     Self operator+(const Self &o) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] + o[i]; return out; }
     Self operator-(const Self &o) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] - o[i]; return out; }
     Self operator*(const Real &x) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] * x; return out; }
@@ -152,24 +152,24 @@ public:
     OPAS(*=, Real, )
     OPAS(/=, Real, )
 #undef OPAS
-    
-    Vec operator*(const Vec &v) const { 
+
+    Vec operator*(const Vec &v) const {
         return Vec(m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
                    m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
                    m[6] * v[0] + m[7] * v[1] + m[8] * v[2]);
     }
-    
+
     Self operator*(const Self &o) const {
         return Self((*this) * Vec(o[0], o[3], o[6]), (*this) * Vec(o[1], o[4], o[7]), (*this) * Vec(o[2], o[5], o[8]));
     }
-    
+
     Self operator~() const { //transpose
         Self out(S(0)); //uninitialized
         out[0] = m[0]; out[4] = m[4]; out[8] = m[8];
         out[1] = m[3]; out[3] = m[1]; out[2] = m[6]; out[6] = m[2]; out[5] = m[7]; out[7] = m[5];
         return out;
     }
-    
+
     Self operator!() const { //invert
         Self out(S(0));
         Real d = det();

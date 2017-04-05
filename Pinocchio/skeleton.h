@@ -58,7 +58,7 @@ protected:
 private:
      //full
     PtGraph fGraphV;
-    vector<int> fPrevV; //previous vertices
+    vector<int> fPrevV; //previous vertices, 18
     vector<int> fSymV; //symmetry
     
     //compressed (no degree 2 vertices)

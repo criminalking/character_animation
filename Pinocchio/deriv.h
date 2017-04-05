@@ -60,7 +60,6 @@ public:
     const Vector<Real, Vars> &_d() const { return d; }
         
 private:
-    
     Real x;
     Vector<Real, Vars> d;
 };

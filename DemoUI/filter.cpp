@@ -24,8 +24,7 @@ THE SOFTWARE.
 #include "../Pinocchio/deriv.h"
 
 template<class Real>
-Vectorn<Real> getFeet(const vector<Transform<Real> > &transforms, const vector<Vector3> &joints,
-                                  const vector<int> &prev)
+Vectorn<Real> getFeet(const vector<Transform<Real> > &transforms, const vector<Vector3> &joints, const vector<int> &prev)
 {
     int i;
     Vectorn<Real> out;
@@ -49,24 +48,24 @@ Vectorn<Real> getFeet(const vector<Transform<Real> > &transforms, const vector<V
     return out;
 }
 
-Vectorn<double> toVector(const vector<Transform<> > &transforms)
+Vectorn<double> toVector(const vector<Transform<> > &transforms) // transform to vector
 {
-    Vectorn<double> out(3 + 4 * transforms.size());
-    out[0] = transforms[0].getTrans()[0];
-    out[1] = transforms[0].getTrans()[1];
-    out[2] = transforms[0].getTrans()[2];
+  Vectorn<double> out(3 + 4 * transforms.size());
+  out[0] = transforms[0].getTrans()[0]; // root only consider translation
+  out[1] = transforms[0].getTrans()[1];
+  out[2] = transforms[0].getTrans()[2];
 
-    for(int i = 0; i < (int)transforms.size(); ++i) {
-        out[3 + i * 4 + 0] = transforms[i].getRot()[0];
-        out[3 + i * 4 + 1] = transforms[i].getRot()[1];
-        out[3 + i * 4 + 2] = transforms[i].getRot()[2];
-        out[3 + i * 4 + 3] = transforms[i].getRot()[3];
-    }
+  for(int i = 0; i < (int)transforms.size(); ++i) {
+    out[3 + i * 4 + 0] = transforms[i].getRot()[0]; // joint only consider rotation
+    out[3 + i * 4 + 1] = transforms[i].getRot()[1]; // 4 is quaternion(r+v[3])
+    out[3 + i * 4 + 2] = transforms[i].getRot()[2];
+    out[3 + i * 4 + 3] = transforms[i].getRot()[3];
+  }
 
-    return out;
+  return out;
 }
 
-vector<Transform<> > fromVector(const Vectorn<double> &v)
+vector<Transform<> > fromVector(const Vectorn<double> &v) // vector to transform
 {
     vector<Transform<> > out;
 
@@ -74,7 +73,7 @@ vector<Transform<> > fromVector(const Vectorn<double> &v)
     Vector3 trans0(v[0], v[1], v[2]);
     for(i = 3; i + 3 < (int)v.size(); i += 4) {
         Quaternion<> rot;
-        rot.set(v[i], Vector3(v[i + 1], v[i + 2], v[i + 3]));
+        rot.set(v[i], Vector3(v[i + 1], v[i + 2], v[i + 3])); // v[i] ir r, other is v
 
         if(i == 3)
             out.push_back(Transform<>(rot, 1., trans0));
@@ -100,7 +99,7 @@ Vectorn<double> adjVector(const Vectorn<double> &v, const Vectorn<double> &dirs)
 }
 
 Matrixn<double> MotionFilter::getJac(const vector<Transform<> > &transforms) const
-{
+{ // get Jacobian
     typedef Deriv<double, -1> D;
     vector<Transform<D> > transD(transforms.size());
     int i, j;
@@ -117,7 +116,7 @@ Matrixn<double> MotionFilter::getJac(const vector<Transform<> > &transforms) con
         rot.set(D(transVec[curIdx], curIdx), Vector<D, 3>(D(transVec[curIdx + 1], curIdx + 1),
                                                           D(transVec[curIdx + 2], curIdx + 2),
                                                           D(transVec[curIdx + 3], curIdx + 3)));
-        
+
         if(i == 0)
             transD[i] = Transform<D>(rot, 1., trans0);
         else
@@ -125,7 +124,7 @@ Matrixn<double> MotionFilter::getJac(const vector<Transform<> > &transforms) con
     }
 
     Vectorn<D> feet = getFeet(transD, joints, prev);
-    Matrixn<double> out(feet.size(), 3 + 4 * transforms.size());
+    Matrixn<double> out(feet.size(), 3 + 4 * transforms.size()); // transforms.size() = 17
     for(i = 0; i < out.getRows(); ++i) for(j = 0; j < out.getCols(); ++j) {
         out[i][j] = feet[i].getDeriv(j);
     }
@@ -166,7 +165,7 @@ void MotionFilter::step(const vector<Transform<> > &transforms, vector<Vector3> 
 #else //svd based pseudoinverse
     Matrixn<double> u, v;
     Vectorn<double> sigma;
-    
+
     sigma = getSVD(~jac, u, v);
     double minSV = 1e-6;
     for(i = 0; i < (int)sigma.size(); ++i) {
@@ -175,7 +174,7 @@ void MotionFilter::step(const vector<Transform<> > &transforms, vector<Vector3> 
         }
         sigma[i] = 1. / sigma[i];
     }
-    
+
     Matrixn<double> jacPI = u * (Matrixn<double>::identity(sigma) * ~v);
 #endif
 
@@ -197,7 +196,7 @@ void MotionFilter::step(const vector<Transform<> > &transforms, vector<Vector3> 
     transVector[1] = newTrans[1];
     transVector[2] = newTrans[2];
     tDelta = tDelta + projMatrix * transVector * 0.8;
-    
+
     curTransforms = fromVector(toVector(curTransforms) + tDelta);
     addTranslation();
 
@@ -209,7 +208,7 @@ void MotionFilter::addTranslation()
 {
     int i;
     vector<Vector3> pts = joints;
-    
+
     pts[0] = curTransforms[0] * pts[0];
     pts[1] = curTransforms[0] * pts[1];
     for(i = 1; i < (int)curTransforms.size(); ++i) {

@@ -184,7 +184,7 @@ public:
     Self normalize() const { return (*this) / length(); }
 
     int size() const { return m.size(); }
-    
+
 private:
     vector<Real> m;
 };

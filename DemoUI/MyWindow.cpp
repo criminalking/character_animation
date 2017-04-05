@@ -151,13 +151,13 @@ void MyWindow::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    //Transform------
+    //Transform------(always the same)
     Vector3 trans = transform.getTrans();
     glTranslated(trans[0], trans[1], -10 + trans[2]);
-    
+
     double scale = transform.getScale();
     glScaled(scale, scale, scale);
-    
+
     Quaternion<> r = transform.getRot();
     double ang = r.getAngle();
     if(fabs(ang) > 1e-6) {
@@ -170,8 +170,8 @@ void MyWindow::draw() {
         drawFloor();
 
     vector<const Mesh *> ms(meshes.size());
-    for(i = 0; i < (int)meshes.size(); ++i) {
-        ms[i] = &(meshes[i]->getMesh());
+    for(i = 0; i < (int)meshes.size(); ++i) { // size is 1(only one mesh in scene)
+      ms[i] = &(meshes[i]->getMesh()); // contains update mesh
     }
 
     //shadows
@@ -180,7 +180,7 @@ void MyWindow::draw() {
         if(lightRay[1] == 0)
             lightRay[1] = 1e-5;
         lightRay = -lightRay / lightRay[1];
-            
+
         glDisable(GL_LIGHTING);
         glColor3f(0.1f, 0.1f, 0.1f);
         glPushMatrix();
@@ -188,7 +188,7 @@ void MyWindow::draw() {
         glMultMatrixf(matr);
         glDepthMask(0);
         for(i = 0; i < (int)ms.size(); ++i)
-            drawMesh(*(ms[i]), flatShading);                
+          drawMesh(*(ms[i]), flatShading);
         glDepthMask(1);
         glEnable(GL_LIGHTING);
         glPopMatrix();
@@ -204,7 +204,7 @@ void MyWindow::draw() {
         drawMesh(*(ms[i]), flatShading);
     }
 
-    //draw lines
+    //draw lines(of skeleton)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
     for(i = 0; i < (int)lines.size(); ++i) {
@@ -216,22 +216,22 @@ void MyWindow::draw() {
         glEnd();
     }
 
-    if(skeleton) {
+    if(skeleton) { // show skeleton
         glLineWidth(5);
         for(i = 0; i < (int)meshes.size(); ++i) {
           vector<Vector3> v = meshes[i]->getSkel(); // location of joints, getSkel is from DisplayMesh(static) or DefMesh(motion)
-            if(v.size() == 0)
-                continue;
-            glColor3d(.5, 0, 0);
+          if(v.size() == 0) // v.size() = 18
+            continue;
+          glColor3d(.5, 0, 0);
 
-            const vector<int> &prev = human.fPrev(); // parent of every joint
-            glBegin(GL_LINES);
-            for(int j = 1; j < (int)prev.size(); ++j) {
-                int k = prev[j];
-                glVertex3d(v[j][0], v[j][1], v[j][2]); // connect joint and his parent
-                glVertex3d(v[k][0], v[k][1], v[k][2]);
-            }
-            glEnd();
+          const vector<int> &prev = human.fPrev(); // parent of every joint, makejoint decides
+          glBegin(GL_LINES);
+          for(int j = 1; j < (int)prev.size(); ++j) { // 1-18 (17 lines)
+            int k = prev[j];
+            glVertex3d(v[j][0], v[j][1], v[j][2]); // connect joint and his parent
+            glVertex3d(v[k][0], v[k][1], v[k][2]);
+          }
+          glEnd();
         }
     }
 }
@@ -274,11 +274,11 @@ void MyWindow::drawMesh(const Mesh &m, bool flatShading, Vector3 trans)
         else if(i % 3 == 0) {
             const Vector3 &p2 = m.vertices[m.edges[i + 1].vertex].pos;
             const Vector3 &p3 = m.vertices[m.edges[i + 2].vertex].pos;
-        
+
             normal = ((p2 - p) % (p3 - p)).normalize();
             glNormal3d(normal[0], normal[1], normal[2]);
         }
-    
+
         glVertex3d(p[0] + trans[0], p[1] + trans[1], p[2] + trans[2]);
     }
     glEnd();

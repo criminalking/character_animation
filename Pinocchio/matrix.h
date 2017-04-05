@@ -189,7 +189,7 @@ public:
 
         Self out = identity(m.size());
         Self tmp = *this;
-        
+
         int i, j;
         for(i = 0; i < getRows(); ++i) {
             //find pivot
@@ -202,7 +202,7 @@ public:
                     pivot = j;
                 }
             }
-            
+
             assert(biggestSoFar > 1e-10); //nonsingular
             if(biggestSoFar <= 1e-10)
                 return out; //whatever

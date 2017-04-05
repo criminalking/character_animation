@@ -17,6 +17,7 @@
 */
 
 #include "mesh.h"
+#include <cmath>
 #include "hashutils.h"
 #include "utils.h"
 #include "debugging.h"
@@ -90,14 +91,14 @@ void Mesh::computeTopology()
     int i;
     for(i = 0; i < (int)edges.size(); ++i)
         edges[i].prev = (i - i % 3) + (i + 2) % 3;
-    
+
     vector<map<int, int> > halfEdgeMap(vertices.size());
     for(i = 0; i < (int)edges.size(); ++i) {
         int v1 = edges[i].vertex;
         int v2 = edges[edges[i].prev].vertex;
 
         vertices[v1].edge = edges[edges[i].prev].prev; //assign the vertex' edge
-        
+
         if(halfEdgeMap[v1].count(v2)) {
             Debugging::out() << "Error: duplicate edge detected: " << v1 << " to " << v2 << endl;
             OUT;
@@ -120,7 +121,7 @@ void Mesh::computeVertexNormals()
         int i1 = edges[i].vertex;
         int i2 = edges[i + 1].vertex;
         int i3 = edges[i + 2].vertex;
-        Vector3 normal = ((vertices[i2].pos - vertices[i1].pos) % (vertices[i3].pos - vertices[i1].pos)).normalize();
+        Vector3 normal = ((vertices[i2].pos - vertices[i1].pos) % (vertices[i3].pos - vertices[i1].pos)).normalize(); // % is cross product
         vertices[i1].normal += normal;
         vertices[i2].normal += normal;
         vertices[i3].normal += normal;
@@ -137,7 +138,7 @@ void Mesh::normalizeBoundingBox()
         positions.push_back(vertices[i].pos);
     }
     Rect3 boundingBox = Rect3(positions.begin(), positions.end());
-    double cscale = .9 / boundingBox.getSize().accumulate(ident<double>(), maximum<double>());
+    double cscale = .9 / boundingBox.getSize().accumulate(ident<double>(), maximum<double>()); // after .getSize() get a Vec
     Vector3 ctoAdd = Vector3(0.5, 0.5, 0.5) - boundingBox.getCenter() * cscale;
     for(i = 0; i < (int)vertices.size(); ++i) {
         vertices[i].pos = ctoAdd + vertices[i].pos * cscale;
@@ -231,17 +232,17 @@ void Mesh::readObj(istream &strm)
     int lineNum = 0;
     while(!strm.eof()) {
         ++lineNum;
-        
+
         vector<string> words = readWords(strm);
-        
+
         if(words.size() == 0)
             continue;
         if(words[0][0] == '#') //comment
             continue;
-        
+
         if(words[0].size() != 1) //unknown line
             continue;
-        
+
         //deal with the line based on the first word
         if(words[0][0] == 'v') {
             if(words.size() != 4) {
@@ -258,19 +259,19 @@ void Mesh::readObj(istream &strm)
             vertices.back().pos = Vector3(x, y, z);
         }
         
-        if(words[0][0] == 'f') {
+        if(words[0][0] == 'f') { // index of three vertices
             if(words.size() < 4 || words.size() > 15) {
                 Debugging::out() << "Error on line " << lineNum << endl;
                 OUT;
             }
-            
+
             int a[16];
             for(i = 0; i < (int)words.size() - 1; ++i)
                 sscanf(words[i + 1].c_str(), "%d", a + i);
 
             //swap(a[1], a[2]); //TODO:remove
 
-            for(int j = 2; j < (int)words.size() - 1; ++j) {
+            for(int j = 2; j < (int)words.size() - 1; ++j) { // if form like: f a b c, j is always 2
                 int first = edges.size();
                 edges.resize(edges.size() + 3);
                 edges[first].vertex = a[0] - 1;

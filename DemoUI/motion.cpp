@@ -46,24 +46,24 @@ vector<Vector3> computePose(const vector<Vector3> &nums, const int *prev)
     int i;
     vector<Vector3> out;
     vector<Transform<> > tr;
-    
-    for(i = 0; i < (int)nums.size(); i += 2) {
+
+    for(i = 0; i < (int)nums.size(); i += 2) { // 38=19*2
         Transform<> cur;
-        if(nums[i].length() > 1e-8)
-            cur = Transform<>(Quaternion<>(nums[i], nums[i].length()), 1., nums[i + 1]);
+        if(nums[i].length() > 1e-8) // vector's length is not 0
+          cur = Transform<>(Quaternion<>(nums[i], nums[i].length()), 1., nums[i + 1]); // rot, scale, trans
         else
             cur = Transform<>(nums[i + 1]);
-        
+
         if(prev[i / 2] >= 0)
             cur = tr[prev[i / 2]] * cur;
-        
+
         out.push_back(cur * Vector3(0, 0, 0));
         tr.push_back(cur);
     }
     for(i = 0; i < (int)out.size(); ++i)
-        out[i] = 0.0005 * (/*tr[0].inverse() */ out[i]);
+      out[i] = 0.0005 * (/*tr[0].inverse() */ out[i]);
     for(i = 0; i < (int)out.size(); ++i)
-        out[i] = Quaternion<>(Vector3(1., 1., 1.), 4. * M_PI / 3.) * out[i];
+      out[i] = Quaternion<>(Vector3(1., 1., 1.), 4. * M_PI / 3.) * out[i]; // (asix, angle)
     return out;
 }
 
@@ -77,7 +77,6 @@ vector<Transform<> > computeTransfs(const vector<Vector3> &nums, const vector<Ve
         Transform<> cur;
         if(nums[i].length() > 1e-8) // sqrt(a^2+b^2+c^2) > 0
           {
-            std::cout << nums[i].length() << std::endl;
             cur = Transform<>(Quaternion<>(nums[i], nums[i].length()), 1., nums[i + 1]);
           }
         else
@@ -144,7 +143,7 @@ void Motion::readH(istream &strm)
         if(i != 10 && i != 11 && i != 14 && i != 15 && i != 7 && i != 3 && i != 16 && i != 12)
             refNums[i * 2] = Vector3();
     }
-    refNums[24] = refNums[32] = (refNums[24] + refNums[32]) * 0.25;
+    refNums[24] = refNums[32] = v(refNums[24] + refNums[32]) * 0.25;
 */
 
     double refVals[numVals] = {
@@ -216,20 +215,18 @@ void Motion::readH(istream &strm)
             legLength = fabs(refPose[4][1] - refPose[0][1]);
         }
 
-        vector<Vector3> pose = computePose(nums, filePrev); //pose.size = 19
+        vector<Vector3> pose = computePose(nums, filePrev); //nums:38*3, filePrev:19*1, pose.size = 19
 
-        {
-            vector<Vector3> cp;
-            for(i = 1; i < (int)pose.size(); ++i) {
-                cp.push_back(pose[filePrev[i]]);
-                cp.push_back(pose[i]);
-            }
-            poses.push_back(cp);
+        vector<Vector3> cp; // cp.size() = 36
+        for(i = 1; i < (int)pose.size(); ++i) {
+          cp.push_back(pose[filePrev[i]]);
+          cp.push_back(pose[i]);
         }
+        poses.push_back(cp);
 
         data.resize(data.size() + 1);
-        vector<Transform<> > trs = computeTransfs(nums, refNums, filePrev);
-        for(i = 0; i < (int)skel.fPrev().size() - 1; ++i) {
+        vector<Transform<> > trs = computeTransfs(nums, refNums, filePrev); // size is 19
+        for(i = 0; i < (int)skel.fPrev().size() - 1; ++i) { // 0-16
             data.back().push_back(trs[boneCorresp[i]]);
         }
 
@@ -284,14 +281,3 @@ int Motion::getFrameIdx() const
         return fixedFrame;
     return (getMsecs() / (1000 / 120)) % data.size();
 }
-
-vector<Transform<> > Motion::get() const
-{
-    return data[getFrameIdx()];
-}
-
-vector<Vector3> Motion::getPose() const
-{
-    return poses[getFrameIdx()];
-}
-

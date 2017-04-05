@@ -48,7 +48,7 @@ public:
     virtual void draw();
     virtual int handle(int);
 
-    void addMesh(DisplayMesh *inM) { meshes.push_back(inM); } // different DisplayMesh
+    void addMesh(DisplayMesh *inM) { meshes.push_back(inM);} // different DisplayMesh
     void addLine(const LineSegment &l) { lines.push_back(l); }
     void clearLines() { lines.clear(); }
 
