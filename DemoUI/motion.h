@@ -32,6 +32,7 @@ public:
     void get_size() {std::vector<Vector3> p = poses[0];}
 
     bool empty() const { return data.empty(); }
+
     vector<Transform<> > get() const { return data[getFrameIdx()]; }
     vector<Vector3> getPose() const { return poses[getFrameIdx()]; }
     vector<Vector3> getRefPose() const { return refPose; }
@@ -39,13 +40,13 @@ public:
     double getLegWidth() const { return legWidth; }
 
     const vector<vector<Transform<> > > &getData() const { return data; } // not activated
-    void setFixedFrame(int inFrame) { fixedFrame = inFrame < 0 ? -1 : (int)(inFrame % data.size()); }
+    void setFixedFrame(int inFrame) { fixedFrame = inFrame < 0 ? -1 : (int)(inFrame % data.size()); } // not activated
 private:
     int getFrameIdx() const;
     void readH(istream &strm);
-    vector<vector<Transform<> > > data;
+    vector<vector<Transform<> > > data; // data.size is number of row in motion.txt(except 0 and #), data.size = 17
     vector<vector<Vector3> > poses; // every pose has 36 points
-    vector<Vector3> refPose; // 放了19个点, TODO: why?
+    vector<Vector3> refPose; // 19 points, TODO: why?
     double legLength;
     double legWidth;
     int fixedFrame;

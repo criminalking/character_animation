@@ -22,7 +22,7 @@
 #include "vector.h"
 
 template<class Real>
-void getBasis(const Vector<Real, 3> &n, Vector<Real, 3> &v1, Vector<Real, 3> &v2)
+void getBasis(const Vector<Real, 3> &n, Vector<Real, 3> &v1, Vector<Real, 3> &v2) // n is (0,1,0)
 {
     if(n.lengthsq() < Real(1e-16)) {
         v1 = Vector<Real, 3>(1., 0., 0.);
@@ -35,7 +35,7 @@ void getBasis(const Vector<Real, 3> &n, Vector<Real, 3> &v1, Vector<Real, 3> &v2
         v2 = Vector<Real, 3>(0., 1., 0.);
     else
         v2 = Vector<Real, 3>(0., 0., 1.);
-    
+
     v1 = (n % v2).normalize(); //first basis vector
     v2 = (n % v1).normalize(); //second basis vector
 }

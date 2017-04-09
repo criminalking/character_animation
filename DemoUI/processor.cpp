@@ -201,13 +201,13 @@ void process(const vector<string> &args, MyWindow *w)
     // draw skeleton
     for(i = 1; i < (int)o.embedding.size(); ++i)
       {
-        w->addLine(LineSegment(o.embedding[i], o.embedding[given.fPrev()[i]], Vector3(.5, .5, 0), 4.)); // p1, p2, color
+        w->addLine(LineSegment(o.embedding[i], o.embedding[given.fPrev()[i]], Vector3(.25, .5, 0), 4.)); // p1, p2, color
       }
   }
 
   //output skeleton embedding
-  for(i = 0; i < (int)o.embedding.size(); ++i)
-    o.embedding[i] = (o.embedding[i] - m.toAdd) / m.scale;
+  //for(i = 0; i < (int)o.embedding.size(); ++i)
+  //  o.embedding[i] = (o.embedding[i] - m.toAdd) / m.scale;
   ofstream os("skeleton.out");
   for(i = 0; i < (int)o.embedding.size(); ++i) {
     os << i << " " << o.embedding[i][0] << " " << o.embedding[i][1] <<

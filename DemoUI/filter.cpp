@@ -136,7 +136,8 @@ void MotionFilter::step(const vector<Transform<> > &transforms, vector<Vector3> 
 {
     Vectorn<double> feetV;
     int i, j;
-    for(i = 0; i < (int)feet.size(); ++i) for(j = 0; j < 3; ++j)
+    for(i = 0; i < (int)feet.size(); ++i) // size is 3
+      for(j = 0; j < 3; ++j)
         feetV.push_back(feet[i][j]);
 
     if(curTransforms.size() == 0) {
@@ -204,14 +205,14 @@ void MotionFilter::step(const vector<Transform<> > &transforms, vector<Vector3> 
     prevTrans = transfs[0].getTrans();
 }
 
-void MotionFilter::addTranslation()
+void MotionFilter::addTranslation() // update curTransforms
 {
     int i;
-    vector<Vector3> pts = joints;
+    vector<Vector3> pts = joints; // 18
 
-    pts[0] = curTransforms[0] * pts[0];
-    pts[1] = curTransforms[0] * pts[1];
-    for(i = 1; i < (int)curTransforms.size(); ++i) {
+    pts[0] = curTransforms[0] * pts[0]; // pts[0]
+    pts[1] = curTransforms[0] * pts[1]; // pts[1]
+    for(i = 1; i < (int)curTransforms.size(); ++i) { // pts[2]-pts[17]
         int pi = prev[i + 1];
 
         curTransforms[i] = Transform<>(pts[pi]) * Transform<>(curTransforms[i].getRot()) * Transform<>(-joints[pi]);

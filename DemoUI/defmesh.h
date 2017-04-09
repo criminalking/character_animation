@@ -63,7 +63,7 @@ private:
     mutable Mesh curMesh; // const function could change this
     vector<Quaternion<> > transforms;
 
-    vector<double> footOffsets;
+    vector<double> footOffsets; // footOffsets[0]:left foot, footOffsets[1]:right foot
     mutable MotionFilter filter; // const function getSkel() could change it, TODO: 这里好奇怪，filter并没有给参数，但是motionfilter class中是不带默认构造函数的。。。
 };
 

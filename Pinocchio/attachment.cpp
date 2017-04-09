@@ -194,7 +194,7 @@ public:
 
     Mesh deform(const Mesh &mesh, const vector<Transform<> > &transforms) const
     {
-        Mesh out = mesh;
+        Mesh out = mesh; // always the original mesh, the ref pose
         int i, nv = mesh.vertices.size();
 
         if(mesh.vertices.size() != weights.size())
@@ -203,14 +203,13 @@ public:
         for(i = 0; i < nv; ++i) {
             Vector3 newPos;
             int j;
-            for(j = 0; j < (int)nzweights[i].size(); ++j) {
-                newPos += ((transforms[nzweights[i][j].first] * out.vertices[i].pos) * nzweights[i][j].second);
+            for(j = 0; j < (int)nzweights[i].size(); ++j) { // LBS
+              newPos += ((transforms[nzweights[i][j].first] * out.vertices[i].pos) * nzweights[i][j].second); // nzweights:(bone's index, bone's weight)
             }
             out.vertices[i].pos = newPos;
         }
-        
         out.computeVertexNormals();
-    
+
         return out;
     }
 

@@ -31,27 +31,27 @@ vector<Transform<> > DefMesh::computeTransforms() const
 
   if(motion) {
     vector<Transform<> > ts;
-    ts = motion->get(); // data[getFrameIdx()]
+    ts = motion->get(); // data[getFrameIdx()], size is 17, should be ref trans
 
     double legRatio = getLegRatio();
-    Vector3 trans = ts[0].getTrans() * legRatio; // root's translation
+    Vector3 trans = ts[0].getTrans() * legRatio; // get root's translation
 
     for(int times = 0; times < 2; ++times) {
 
       if(times == 1)
-        trans += (out[0] * match[0] - out[1] * match[2]);
+        trans += (out[0] * match[0] - out[1] * match[2]); // TODO: why???
 
       out.clear();
       vector<Vector3> tm;
-      tm.push_back(match[0]);
-      ts[0] = ts[0].linearComponent();
-      for(i = 0; i < (int)ts.size(); ++i) {
+      tm.push_back(match[0]); // root joint's embedding
+      ts[0] = ts[0].linearComponent(); // discard ts[0]'s trans, keep rotation and scale(because 'trans' already get ts[0]'s trans)
+      for(i = 0; i < (int)ts.size(); ++i) { // 0-16
         int prevV = origSkel.fPrev()[i + 1];
         out.push_back(Transform<>(tm[prevV]) * ts[i] * Transform<>(-match[prevV]));
         tm.push_back(out.back() * match[i + 1]);
       }
 
-      for(i = 0; i < (int)out.size(); ++i)
+      for(i = 0; i < (int)out.size(); ++i) // 0-16
         out[i] = Transform<>(trans + Vector3(0.5, 0, 0.5)) * out[i];
     }
 
@@ -60,10 +60,10 @@ vector<Transform<> > DefMesh::computeTransforms() const
 
   out.push_back(Transform<>(Vector3(0.5, 0, 0.5))); // only have trans
 
-  for(i = 1; i < (int)origSkel.fPrev().size(); ++i) {
+  for(i = 1; i < (int)origSkel.fPrev().size(); ++i) { // 1-17
     int prevV = origSkel.fPrev()[i]; // fPrev here is index
     Transform<> cur = out[prevV];
-    cur = cur * Transform<>(match[prevV]) * Transform<>(transforms[i - 1]) * Transform<>(-match[prevV]);
+    cur = cur * Transform<>(match[prevV]) * Transform<>(transforms[i - 1]) * Transform<>(-match[prevV]); //TODO: ???
 
     out.push_back(cur);
   }
@@ -76,26 +76,26 @@ bool reallyDeform = true;
 
 void DefMesh::updateMesh() const // every frame should update mesh
 {
-  vector<Transform<> > t = computeTransforms();
+  vector<Transform<> > t = computeTransforms(); // size is 17, 17 bones' transforms(without R0)
 
   if(motion) {
-    if(footOffsets.empty()) {
-      Intersector s(origMesh, Vector3(0, 1, 0));
+    if(footOffsets.empty()) { // only once
+      Intersector s(origMesh, Vector3(0, 1, 0)); // projection plane is (x,z)
 
       vector<Vector3> sects;
       double offs;
 
-      sects = s.intersect(match[7]);
+      sects = s.intersect(match[7]); // left foot, size is 4
       offs = 0;
       for(int i = 0; i < (int)sects.size(); ++i)
         offs = max(offs, match[7][1] - sects[i][1]);
-      const_cast<vector<double> *>(&footOffsets)->push_back(offs);
+      const_cast<vector<double> *>(&footOffsets)->push_back(offs); // y offset of left foot
 
-      sects = s.intersect(match[11]);
+      sects = s.intersect(match[11]); // right foot, size is 2
       offs = 0;
       for(int i = 0; i < (int)sects.size(); ++i)
         offs = max(offs, match[11][1] - sects[i][1]);
-      const_cast<vector<double> *>(&footOffsets)->push_back(offs);
+      const_cast<vector<double> *>(&footOffsets)->push_back(offs); // y offset of right foot
     }
 
     vector<Vector3> pose = motion->getPose(); // 36, only used here
@@ -103,10 +103,10 @@ void DefMesh::updateMesh() const // every frame should update mesh
     vector<Vector3> feet;
 
     double legRatio = getLegRatio();
-    feet.push_back(pose[15] * legRatio);
-    feet.push_back(pose[7] * legRatio);
+    feet.push_back(pose[15] * legRatio); // rthign?
+    feet.push_back(pose[7] * legRatio); // lthign?
 
-    double widthDiff = 0.3 * ((refPose[8][0] - refPose[4][0]) * legRatio - (match[7][0] - match[11][0]));
+    double widthDiff = 0.3 * ((refPose[8][0] - refPose[4][0]) * legRatio - (match[7][0] - match[11][0])); // 0.3 * (refpose's foot - o.embedding's foot)
     Vector3 offs1 = t[6].getRot() * Vector3(-widthDiff, 0, 0);
     Vector3 offs2 = t[10].getRot() * Vector3(widthDiff, 0, 0);
     offs1[1] = offs2[1] = 0;
@@ -132,9 +132,9 @@ void DefMesh::updateMesh() const // every frame should update mesh
     Debugging::drawLine(feet[1], feet[1] - offs2, QPen(Qt::red));
 #endif
 
-    filter.step(t, feet);
-    if(reallyDeform)
-      curMesh = attachment.deform(origMesh, filter.getTransforms());
+    filter.step(t, feet); // do online motion retargeting, get new transforms
+    if(reallyDeform) // always true
+      curMesh = attachment.deform(origMesh, filter.getTransforms()); // the second parameter is 17 bones' transforms
 
 #if 0
     static int period = 1;
@@ -149,20 +149,20 @@ void DefMesh::updateMesh() const // every frame should update mesh
 #endif
   }
   else // no motion
-    curMesh = attachment.deform(origMesh, t);
+    curMesh = attachment.deform(origMesh, t); // normal LBS
 }
 
-vector<Vector3> DefMesh::getSkel() const
+vector<Vector3> DefMesh::getSkel() const // final joints position
 {
   vector<Vector3> out = match; // o.embedding
 
   vector<Transform<> > t;
   if(motion)
-    t = filter.getTransforms();
+    t = filter.getTransforms(); // 17
   else // static
-    t = computeTransforms();
+    t = computeTransforms(); // 17
 
-  for(int i = 0; i < (int)out.size(); ++i) {
+  for(int i = 0; i < (int)out.size(); ++i) { // 0-17
     out[i] = t[max(0, i - 1)] * out[i]; // transform to get the new joints
   }
 
@@ -171,7 +171,9 @@ vector<Vector3> DefMesh::getSkel() const
 
 double DefMesh::getLegRatio() const
 {
+  // (lfoot.y - hips.y) / (lthigh.y - shoulder.y)
   double lengthRatio = fabs(match[7][1] - match[2][1]) / motion->getLegLength();
+  // (lfoot.x - rfoot.x) / (lthign.x - rthign.x)
   double widthRatio = fabs(match[7][0] - match[11][0]) / motion->getLegWidth();
 
   return lengthRatio;

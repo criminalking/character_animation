@@ -177,7 +177,7 @@ void Motion::readH(istream &strm)
         0, 0, -263.0299987792969, 0.01854052737835739,
         -0.05639195309438585, -0.0005072173454329611, 0, 0,
 -224.7669982910156
-        
+
     };
 
     refNums.resize(38); // 114 = 38 * 3
@@ -185,7 +185,7 @@ void Motion::readH(istream &strm)
         refNums[i / 3][i % 3] = refVals[i];
 
     while(!strm.eof()) {
-        ++lineNum;
+      ++lineNum;
         if(data.size() > 36000)
             break;
 
@@ -209,30 +209,30 @@ void Motion::readH(istream &strm)
             nums[i / 3][i % 3] = cur; // 38 * 3
         }
 
-        if(refPose.empty()) {
-            refPose = computePose(refNums, filePrev);
-            legWidth = fabs(refPose[4][0] - refPose[8][0]);
-            legLength = fabs(refPose[4][1] - refPose[0][1]);
+        if(refPose.empty()) { // only compute once
+          refPose = computePose(refNums, filePrev); // pre-given, 19
+          legWidth = fabs(refPose[4][0] - refPose[8][0]);
+          legLength = fabs(refPose[4][1] - refPose[0][1]);
         }
 
-        vector<Vector3> pose = computePose(nums, filePrev); //nums:38*3, filePrev:19*1, pose.size = 19
+        vector<Vector3> pose = computePose(nums, filePrev); //nums:38*3(motion.txt), filePrev:19*1, pose.size = 19
 
         vector<Vector3> cp; // cp.size() = 36
-        for(i = 1; i < (int)pose.size(); ++i) {
-          cp.push_back(pose[filePrev[i]]);
+        for(i = 1; i < (int)pose.size(); ++i) { // here we know how to change 19 to 36
+          cp.push_back(pose[filePrev[i]]); // i!=0, so filePrev[i]] will not be -1
           cp.push_back(pose[i]);
         }
         poses.push_back(cp);
 
-        data.resize(data.size() + 1);
+        data.resize(data.size() + 1); // add a new frame
         vector<Transform<> > trs = computeTransfs(nums, refNums, filePrev); // size is 19
         for(i = 0; i < (int)skel.fPrev().size() - 1; ++i) { // 0-16
-            data.back().push_back(trs[boneCorresp[i]]);
+          data.back().push_back(trs[boneCorresp[i]]); // only use trs[0]-trs[17], trs[18] is useless
         }
 
         Quaternion<> qtrans(Vector3(1., 1., 1.), 4. * M_PI / 3.);
-        Transform<> trans(qtrans * nums[1] * 0.0005);
-        data.back()[0] = trans * data.back()[0];
+        Transform<> trans(qtrans * nums[1] * 0.0005); // only trans, no rot or scale
+        data.back()[0] = trans * data.back()[0]; // first(root?) joint of one frame * trans(seems not interfere with the result)
     }
 
     if(false) { //centaur
@@ -279,5 +279,5 @@ int Motion::getFrameIdx() const
 {
     if(fixedFrame >= 0)
         return fixedFrame;
-    return (getMsecs() / (1000 / 120)) % data.size();
+    return (getMsecs() / (1000 / 120)) % data.size(); // iteratively get one frame (number of overall frames is row of motion.txt)
 }

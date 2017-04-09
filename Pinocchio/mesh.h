@@ -27,7 +27,7 @@
 struct MeshVertex
 {
     MeshVertex() : edge(-1) {}
-    
+
     Vector3 pos;
     Vector3 normal;
     int edge; //an edge such that edge->prev->vertex is this
@@ -36,7 +36,7 @@ struct MeshVertex
 struct MeshEdge
 {
     MeshEdge() : vertex(-1), prev(-1), twin(-1) {}
-    
+
     int vertex; //the vertex the edge points to--the start vertex is prev->vertex
     int prev; //ccw, next is prev->prev
     int twin;

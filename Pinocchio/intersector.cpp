@@ -25,11 +25,11 @@
 
 static const int cells = 200;
 
-void Intersector::getIndex(const Vector2 &pt, int &x, int &y) const
+void Intersector::getIndex(const Vector2 &pt, int &x, int &y) const // set to (0,199)
 {
     Vector2 c = (pt - bounds.getLo()).apply(divides<double>(), bounds.getSize());
     x = int(c[0] * double(cells));
-    y = int(c[0] * double(cells));
+    y = int(c[1] * double(cells));
     x = max(0, min(cells - 1, x));
     y = max(0, min(cells - 1, y));
 }
@@ -39,32 +39,33 @@ void Intersector::init()
     int i, j, k;
     const vector<MeshVertex> &vtc = mesh->vertices;
     const vector<MeshEdge> &edg = mesh->edges;
-    
+
     dir = dir.normalize();
-    getBasis(dir, v1, v2);
-    
+    getBasis(dir, v1, v2); // dir is n, v2=(1,0,0), v1=v2xn, v2=v1xn
+
     points.resize(vtc.size());
     sNormals.resize(edg.size() / 3);
     for(i = 0; i < (int)vtc.size(); ++i) {
-        points[i] = Vector2(vtc[i].pos * v1, vtc[i].pos * v2);
+      points[i] = Vector2(vtc[i].pos * v1, vtc[i].pos * v2); // coordinate when projects to (v1,v2) plane
     }
-    
+
     bounds = Rect2(points.begin(), points.end());
-    
-    triangles.resize(cells * cells);
+
+    triangles.resize(cells * cells); // cells 200
     for(i = 0; i < (int)edg.size(); i += 3) {
         Rect2 triRect;
         for(j = 0; j < 3; ++j)
             triRect |= Rect2(points[edg[i + j].vertex]);
-        
+
         int fromx, fromy, tox, toy;
         getIndex(triRect.getLo(), fromx, fromy);
         getIndex(triRect.getHi(), tox, toy);
-        
-        for(j = fromy; j <= toy; ++j) for(k = fromx; k <= tox; ++k) {
+
+        for(j = fromy; j <= toy; ++j)
+          for(k = fromx; k <= tox; ++k) {
             triangles[j * cells + k].push_back(i);
         }
-        
+
         Vector3 cross = (vtc[edg[i + 1].vertex].pos - vtc[edg[i].vertex].pos) % (vtc[edg[i + 2].vertex].pos - vtc[edg[i].vertex].pos);
         j = i / 3;
         sNormals[j] = cross.normalize();
@@ -80,17 +81,17 @@ vector<Vector3> Intersector::intersect(const Vector3 &pt, vector<int> *outIndice
     int i;
     const vector<MeshVertex> &vtc = mesh->vertices;
     const vector<MeshEdge> &edg = mesh->edges;
-    
+
     vector<Vector3> out;
-    
-    Vector2 pt2(pt * v1, pt * v2);
+
+    Vector2 pt2(pt * v1, pt * v2); // projects to basis
     if(!bounds.contains(pt2))
         return out; //no intersections
-    
+
     int x, y;
     getIndex(pt2, x, y);
     const vector<int> &tris = triangles[y * cells + x];
-    for(i = 0; i < (int)tris.size(); ++i) {
+    for(i = 0; i < (int)tris.size(); ++i) { // one triangle has many points
         int j;
         //check if triangle intersects line
         int sign[3];
@@ -108,7 +109,7 @@ vector<Vector3> Intersector::intersect(const Vector3 &pt, vector<int> *outIndice
 
         if(outIndices)
 	       outIndices->push_back(tris[i]);
-        
+
         //now compute the plane intersection
         const Vector3 &n = sNormals[tris[i] / 3];
         if(n.lengthsq() == 0) { //triangle and line coplanar --just project the triangle center to the line and hope for the best
@@ -119,6 +120,6 @@ vector<Vector3> Intersector::intersect(const Vector3 &pt, vector<int> *outIndice
 
         out.push_back(pt + dir * (n * (vtc[idx[0]].pos - pt))); //intersection
     }
-    
+
     return out;
 }

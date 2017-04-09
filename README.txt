@@ -100,7 +100,7 @@ deriv.h          automatic differentiation routines
 rect.h           defines an axis-aligned bounding-box
 matrix.h         defines a variable length vector and dense matrix
 lsqSolver.h      defines a nice way of specifying sparse least squares systems
-lsqSolver.cpp    solves them or has an interface to TAUCS
+lsqSolver.cpp    solves them or has an interface to TAUCS(a library for sparse linear solvers)
 mesh.h           the mesh structure (based on directed edges--Campagna et al.)
 intersector.h    routines for intersecting lines with a mesh
 pointprojector.h defines kd-trees for projection
