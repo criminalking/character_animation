@@ -33,7 +33,7 @@ inline vector<string> readWords(istream &stream)
 {
     string whitespace = " \n\t\r";
     stream >> noskipws;
-    
+
     char tmp[10000];
     stream.getline(tmp, 9990);
     string line(tmp);
@@ -46,7 +46,7 @@ inline vector<string> readWords(istream &stream)
         stream.getline(tmp, 9990);
         line = line + string(tmp);
     }
-        
+
     //split the line into words
     vector<string> words;
     string::size_type pos = 0;
@@ -58,7 +58,7 @@ inline vector<string> readWords(istream &stream)
         words.push_back(string(line, pos, eow - pos));
         pos = eow;
     }
-    
+
     return words;
 }
 

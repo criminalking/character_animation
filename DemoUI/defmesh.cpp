@@ -74,6 +74,15 @@ vector<Transform<> > DefMesh::computeTransforms() const
 
 bool reallyDeform = true;
 
+const Mesh& DefMesh::getMesh2() // update for attachment
+{
+
+
+
+  
+  return curMesh;
+}
+
 void DefMesh::updateMesh() const // every frame should update mesh
 {
   vector<Transform<> > t = computeTransforms(); // size is 17, 17 bones' transforms(without R0)

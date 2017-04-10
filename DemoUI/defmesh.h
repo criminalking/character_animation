@@ -36,7 +36,7 @@ public:
       : origSkel(inOrigSkel), match(inMatch), attachment(inAttachment),
         origMesh(inMesh), motion(inMotion), filter(match, origSkel.fPrev())
     {
-        transforms.resize(origSkel.fPrev().size() - 1);
+      transforms.resize(origSkel.fPrev().size() - 1); // tranform's size is bones' size
     }
 
     void setMotion(Motion *inMotion) { motion = inMotion; }
@@ -49,6 +49,8 @@ public:
     const Attachment &getAttachment() const { return attachment; }
 
     const Mesh &getMesh() { updateMesh(); return curMesh; }
+
+    const Mesh &getMesh2();
 
 private:
     double getLegRatio() const;

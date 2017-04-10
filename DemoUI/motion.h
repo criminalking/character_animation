@@ -28,7 +28,7 @@ THE SOFTWARE.
 class Motion
 {
 public:
-    Motion(const string &filename);
+  Motion(const string &filename, bool useMyOwnMotion = false);
     void get_size() {std::vector<Vector3> p = poses[0];}
 
     bool empty() const { return data.empty(); }
@@ -43,7 +43,8 @@ public:
     void setFixedFrame(int inFrame) { fixedFrame = inFrame < 0 ? -1 : (int)(inFrame % data.size()); } // not activated
 private:
     int getFrameIdx() const;
-    void readH(istream &strm);
+    void readH(istream &strm); // orginal read motion
+    void readMotion(istream &strm); // my own read motion
     vector<vector<Transform<> > > data; // data.size is number of row in motion.txt(except 0 and #), data.size = 17
     vector<vector<Vector3> > poses; // every pose has 36 points
     vector<Vector3> refPose; // 19 points, TODO: why?

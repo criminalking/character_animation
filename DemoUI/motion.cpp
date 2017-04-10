@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <fstream>
 #include <sstream>
 
-Motion::Motion(const string &file) : fixedFrame(-1)
+Motion::Motion(const string &file, bool useMyOwnMotion) : fixedFrame(-1)
 {
     ifstream strm(file.c_str());
 
@@ -38,7 +38,10 @@ Motion::Motion(const string &file) : fixedFrame(-1)
 
     cout << "Reading " << file << endl;
 
-    readH(strm);
+    if (useMyOwnMotion)
+      readMotion(strm);
+    else
+      readH(strm);
 }
 
 vector<Vector3> computePose(const vector<Vector3> &nums, const int *prev)
@@ -109,6 +112,69 @@ vector<Transform<> > computeTransfs(const vector<Vector3> &nums, const vector<Ve
 
     return out;
 }
+
+void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
+{
+  const int numJoints = 17;
+  vector<Vector3> nums(numJoints);
+  int lineNum = 0;
+  while(!strm.eof()) {
+    ++lineNum;
+    if(data.size() > 36000) // don't read frame more than 36000
+      break;
+
+    vector<string> words = readWords(strm);
+
+    if(words.size() == 0)
+      continue;
+
+    if(words.size() != (int)numJoints) {
+      cout << "Error reading motion file: not " << numJoints << " numbers in line " << lineNum << endl;
+      data.clear();
+      poses.clear();
+      return;
+    }
+
+    if (lineNum % 3 == 0) // x
+      {
+        data.resize(data.size() + 1); // add a new frame
+        poses.resize(poses.size() + 1);
+        for(int i = 0; i < (int)words.size(); ++i) {
+          double cur;
+          sscanf(words[i].c_str(), "%lf", &cur);
+          nums[0][i] = cur;
+        }
+      }
+    else if (lineNum % 3 == 1) // z
+      {
+        for(int i = 0; i < (int)words.size(); ++i) {
+          double cur;
+          sscanf(words[i].c_str(), "%lf", &cur);
+          nums[2][i] = cur;
+        }
+      }
+    else // y
+      {
+        for(int i = 0; i < (int)words.size(); ++i) {
+          double cur;
+          sscanf(words[i].c_str(), "%lf", &cur);
+          nums[1][i] = cur;
+          poses.back().push_back(nums[i]);
+        }
+      }
+
+    // compute transform
+
+    //vector<Transform<> > trs = computeTransfs(nums, refNums, filePrev); // size is 19
+    //for(int i = 0; i < (int)skel.fPrev().size() - 1; ++i) { // 0-joints'size-2
+    //  data.back().push_back(trs[boneCorresp[i]]); // only use trs[0]-trs[17], trs[18] is useless
+
+    //Quaternion<> qtrans(Vector3(1., 1., 1.), 4. * M_PI / 3.);
+    //Transform<> trans(qtrans * nums[1] * 0.0005); // only trans, no rot or scale
+    //data.back()[0] = trans * data.back()[0]; // first(root?) joint of one frame * trans(seems not interfere with the result)
+  }
+}
+
 
 void Motion::readH(istream &strm)
 {

@@ -156,7 +156,7 @@ void process(const vector<string> &args, MyWindow *w)
   }
 
   for(i = 0; i < (int)m.vertices.size(); ++i)
-    m.vertices[i].pos = a.meshTransform * m.vertices[i].pos; // rotate every vertex
+    m.vertices[i].pos = a.meshTransform * m.vertices[i].pos; // rotate every vertex(if angle should add 180)
   m.normalizeBoundingBox();
   m.computeVertexNormals();
 
@@ -169,7 +169,7 @@ void process(const vector<string> &args, MyWindow *w)
   }
 
   PinocchioOutput o;
-  if(!a.noFit) { //do everything
+  if(!a.noFit) { //do everything about embedding
     o = autorig(given, m); // in "pinocchioApi.h", given is skeleton, m is mesh
   }
   else { //skip the fitting step--assume the skeleton is already correct for the mesh
@@ -186,13 +186,15 @@ void process(const vector<string> &args, MyWindow *w)
     delete distanceField;
   }
 
-  if(o.embedding.size() == 0) { // size is 18
+  if(o.embedding.size() == 0) { // size is joints' number
     cout << "Error embedding" << endl;
     exit(0);
   }
 
   if(a.motionname.size() > 0) {
-    Motion *p = new Motion(a.motionname); // readH processes motion(contains computePose, computeTrans...)
+    bool useMyOwnMotion = true;
+    //Motion *p = new Motion(a.motionname); // input is frames*114, readH processes motion
+    Motion *p = new Motion(a.motionname, useMyOwnMotion); // input is 3frames*17
     w->addMesh(new DefMesh(m, given, o.embedding, *(o.attachment), p));
     p->get_size();
   }
@@ -218,7 +220,7 @@ void process(const vector<string> &args, MyWindow *w)
   std::ofstream astrm("attachment.out");
   for(i = 0; i < (int)m.vertices.size(); ++i) {
     Vector<double, -1> v = o.attachment->getWeights(i);
-    for(int j = 0; j < v.size(); ++j) { // 17
+    for(int j = 0; j < v.size(); ++j) { // bones' number
       double d = floor(0.5 + v[j] * 10000.) / 10000.; // four decimal places
       astrm << d << " ";
     }
