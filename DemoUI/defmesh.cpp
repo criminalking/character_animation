@@ -77,19 +77,21 @@ bool reallyDeform = true;
 void DefMesh::updateMesh2() // update for attachment
 {
   vector<Vector3> pose = motion->getPose(); // joints of one frame
-  vector<Transform<> > t;
+  vector<Transform<> > t; // t.size() = joints' size - 1
 
   // compute every bone's transforms
   // if this is the first frame, should remember its root
   Vector3 root = motion->getRoot();
-  Vector3 trans = root - pose[0];
-  t[0] = Transform<>(trans); // R0's translation should add trans
-  for (int i = 1; i < origSkel.fPrev().size() - 1; ++i)
+  vector<Vector3> trans; // translation of joints
+  trans.push_back(root - pose[0]); // trans[0]
+  joints.push_back(match[0] + root - pose[0]); // joints[0]
+  for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {
       int prevV = origSkel.fPrev()[i];
       Quaternion<> rot(match[i] - match[prevV], pose[i] - pose[prevV]);
-      Vector3 parent_new = t[prevV] * pose[i];
-      t[i] = Transform<>(rot, 1.0, parent_new - pose[i]);
+      t.push_back(Transform<>(rot, 1.0, trans[prevV])); // t[i-1]
+      joints.push_back(t.back() * match[i]); // child's new position
+      trans.push_back(joints[i] - match[i]); // child's translation
     }
   curMesh = attachment.deform(origMesh, t); // normal LBS
 }
@@ -172,21 +174,27 @@ void DefMesh::updateMesh() const // every frame should update mesh
     curMesh = attachment.deform(origMesh, t); // normal LBS
 }
 
-vector<Vector3> DefMesh::getSkel() const // final joints position
+vector<Vector3> DefMesh::getSkel(bool useMyOwnTransform) const // final joints position
 {
-  vector<Vector3> out = match; // o.embedding
+  if (!useMyOwnTransform)
+    {
+      vector<Vector3> out = match; // o.embedding
 
-  vector<Transform<> > t;
-  if(motion)
-    t = filter.getTransforms(); // 17
-  else // static
-    t = computeTransforms(); // 17
+      vector<Transform<> > t;
+      if(motion)
+        t = filter.getTransforms(); // 17
+      else // static
+        t = computeTransforms(); // 17
 
-  for(int i = 0; i < (int)out.size(); ++i) { // 0-17
-    out[i] = t[max(0, i - 1)] * out[i]; // transform to get the new joints
-  }
-
-  return out; // location of joints, 18
+      for(int i = 0; i < (int)out.size(); ++i) { // 0-17
+        out[i] = t[max(0, i - 1)] * out[i]; // transform to get the new joints
+      }
+      return out; // location of joints, 18
+    }
+  else
+    {
+      return joints;
+    }
 }
 
 double DefMesh::getLegRatio() const

@@ -30,8 +30,8 @@ class DisplayMesh
 public:
     virtual ~DisplayMesh() {}
 
-    virtual const Mesh &getMesh(bool flag = false) = 0;
-    virtual vector<Vector3> getSkel() const { return vector<Vector3>(); }
+    virtual const Mesh &getMesh(bool useMyOwnTransform = false) = 0;
+    virtual vector<Vector3> getSkel(bool useMyOwnTransform = false) const { return vector<Vector3>(); }
 };
 
 class StaticDisplayMesh : public DisplayMesh
@@ -39,7 +39,7 @@ class StaticDisplayMesh : public DisplayMesh
 public:
     StaticDisplayMesh(const Mesh &inM) : m(inM) {}
 
-    virtual const Mesh &getMesh(bool flag = false) { return m; }
+    virtual const Mesh &getMesh(bool useMyOwnTransform = false) { return m; }
 private:
 
     Mesh m;

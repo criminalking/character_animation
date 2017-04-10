@@ -43,7 +43,7 @@ public:
     Motion *getMotion() const { return motion; }
     void updateIfHasMotion() const { if(motion) updateMesh(); } // never activated
 
-    vector<Vector3> getSkel() const;
+    vector<Vector3> getSkel(bool useMyOwnTransform = false) const;
     const Skeleton &getOrigSkel() const { return origSkel; }
 
     const Attachment &getAttachment() const { return attachment; }
@@ -58,6 +58,7 @@ private:
 
     Skeleton origSkel;
     vector<Vector3> match; // vector<Vector3> o.embedding, size is 18
+    vector<Vector3> joints; // new joints
     Attachment attachment;
     Mesh origMesh;
     Motion *motion;

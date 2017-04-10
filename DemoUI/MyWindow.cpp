@@ -219,8 +219,9 @@ void MyWindow::draw() {
 
     if(skeleton) { // show skeleton
         glLineWidth(5);
+        bool useMyOwnTransform = true;
         for(i = 0; i < (int)meshes.size(); ++i) {
-          vector<Vector3> v = meshes[i]->getSkel(); // location of joints, getSkel is from DisplayMesh(static) or DefMesh(motion)
+          vector<Vector3> v = meshes[i]->getSkel(useMyOwnTransform); // location of joints, getSkel is from DisplayMesh(static) or DefMesh(motion)
           if(v.size() == 0) // v.size() = 18
             continue;
           glColor3d(.5, 0, 0);
