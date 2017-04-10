@@ -78,12 +78,12 @@ void DefMesh::updateMesh2() // update for attachment
 {
   vector<Vector3> pose = motion->getPose(); // joints of one frame
   vector<Transform<> > t; // t.size() = joints' size - 1
-
+  joints.clear();
   // compute every bone's transforms
   // if this is the first frame, should remember its root
   Vector3 root = motion->getRoot();
   vector<Vector3> trans; // translation of joints
-  trans.push_back(root - pose[0]); // trans[0]
+  trans.push_back((root - pose[0])*1); // trans[0]
   joints.push_back(match[0] + root - pose[0]); // joints[0]
   for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {

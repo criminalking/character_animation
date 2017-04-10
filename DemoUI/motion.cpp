@@ -118,6 +118,7 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
   const int numJoints = 17;
   vector<Vector3> nums(numJoints);
   int lineNum = 0;
+  poses.clear();
   while(!strm.eof()) {
     ++lineNum;
     if(data.size() > 36000) // don't read frame more than 36000
@@ -131,37 +132,39 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
     if(words.size() != (int)numJoints) {
       cout << "Error reading motion file: not " << numJoints << " numbers in line " << lineNum << endl;
       data.clear();
-      poses.clear();
       return;
     }
 
     // transfer old skeleton to new skeleton
     int transfer[17] = { 2, 5, 6, 7, 8, 9, 10, 1, 0, 3, 4, 11, 12, 13, 14, 15, 16};
 
-    if (lineNum % 3 == 0) // x
+    if (lineNum % 3 == 1) // x
       {
         data.resize(data.size() + 1); // add a new frame
         poses.resize(poses.size() + 1);
+        nums.clear();
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[0][transfer[i]] = cur;
+          nums[transfer[i]][0] = cur;
         }
       }
-    else if (lineNum % 3 == 1) // z
+    else if (lineNum % 3 == 2) // z?
       {
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[2][transfer[i]] = cur;
+          nums[transfer[i]][1] = cur;
         }
       }
-    else // y
+    else // y?
       {
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[1][transfer[i]] = cur;
+          nums[transfer[i]][2] = cur;
+        }
+        for (int i = 0; i < (int)words.size(); ++i) {
           poses.back().push_back(nums[i]);
         }
       }
@@ -350,5 +353,5 @@ int Motion::getFrameIdx() const
 {
     if(fixedFrame >= 0)
         return fixedFrame;
-    return (getMsecs() / (1000 / 120)) % data.size(); // iteratively get one frame (number of overall frames is row of motion.txt)
+    return (getMsecs() / (20 * 1000 / 120)) % data.size(); // iteratively get one frame (number of overall frames is row of motion.txt)
 }
