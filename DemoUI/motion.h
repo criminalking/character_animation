@@ -28,7 +28,7 @@ THE SOFTWARE.
 class Motion
 {
 public:
-  Motion(const string &filename, bool useMyOwnMotion = false);
+  Motion(const string &filename, bool flag = false);
     void get_size() {std::vector<Vector3> p = poses[0];}
 
     bool empty() const { return data.empty(); }
@@ -38,6 +38,8 @@ public:
     vector<Vector3> getRefPose() const { return refPose; }
     double getLegLength() const { return legLength; }
     double getLegWidth() const { return legWidth; }
+    bool getUseMyOwnMotion() const { return useMyOwnMotion; }
+    Vector3 getRoot() const { return root; }
 
     const vector<vector<Transform<> > > &getData() const { return data; } // not activated
     void setFixedFrame(int inFrame) { fixedFrame = inFrame < 0 ? -1 : (int)(inFrame % data.size()); } // not activated
@@ -46,11 +48,13 @@ private:
     void readH(istream &strm); // orginal read motion
     void readMotion(istream &strm); // my own read motion
     vector<vector<Transform<> > > data; // data.size is number of row in motion.txt(except 0 and #), data.size = 17
-    vector<vector<Vector3> > poses; // every pose has 36 points
+    vector<vector<Vector3> > poses;
     vector<Vector3> refPose; // 19 points, TODO: why?
     double legLength;
     double legWidth;
     int fixedFrame;
+    bool useMyOwnMotion;
+    Vector3 root;
 };
 
 #endif

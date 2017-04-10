@@ -48,14 +48,13 @@ public:
 
     const Attachment &getAttachment() const { return attachment; }
 
-    const Mesh &getMesh() { updateMesh(); return curMesh; }
-
-    const Mesh &getMesh2();
+    const Mesh &getMesh(bool useMyOwnTransform = false) { if (!useMyOwnTransform) updateMesh(); else updateMesh2(); return curMesh; }
 
 private:
     double getLegRatio() const;
     vector<Transform<> > computeTransforms() const;
     void updateMesh() const;
+    void updateMesh2();
 
     Skeleton origSkel;
     vector<Vector3> match; // vector<Vector3> o.embedding, size is 18

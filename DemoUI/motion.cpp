@@ -27,7 +27,7 @@ THE SOFTWARE.
 #include <fstream>
 #include <sstream>
 
-Motion::Motion(const string &file, bool useMyOwnMotion) : fixedFrame(-1)
+Motion::Motion(const string &file, bool flag) : fixedFrame(-1), useMyOwnMotion(flag)
 {
     ifstream strm(file.c_str());
 
@@ -38,7 +38,7 @@ Motion::Motion(const string &file, bool useMyOwnMotion) : fixedFrame(-1)
 
     cout << "Reading " << file << endl;
 
-    if (useMyOwnMotion)
+    if (flag)
       readMotion(strm);
     else
       readH(strm);
@@ -135,6 +135,9 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
       return;
     }
 
+    // transfer old skeleton to new skeleton
+    int transfer[17] = { 2, 5, 6, 7, 8, 9, 10, 1, 0, 3, 4, 11, 12, 13, 14, 15, 16};
+
     if (lineNum % 3 == 0) // x
       {
         data.resize(data.size() + 1); // add a new frame
@@ -142,7 +145,7 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[0][i] = cur;
+          nums[0][transfer[i]] = cur;
         }
       }
     else if (lineNum % 3 == 1) // z
@@ -150,7 +153,7 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[2][i] = cur;
+          nums[2][transfer[i]] = cur;
         }
       }
     else // y
@@ -158,7 +161,7 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[1][i] = cur;
+          nums[1][transfer[i]] = cur;
           poses.back().push_back(nums[i]);
         }
       }
@@ -173,6 +176,8 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
     //Transform<> trans(qtrans * nums[1] * 0.0005); // only trans, no rot or scale
     //data.back()[0] = trans * data.back()[0]; // first(root?) joint of one frame * trans(seems not interfere with the result)
   }
+  // remember first frame's root
+  root = poses[0][0];
 }
 
 

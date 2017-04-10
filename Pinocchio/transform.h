@@ -34,22 +34,22 @@ public:
     //minimum rotation constructor:
     template<class R> Quaternion(const Vector<R, 3> &from, const Vector<R, 3> &to) : r(1.)
     {
-        R fromLenSq = from.lengthsq(), toLenSq = to.lengthsq();
-        if(fromLenSq < toLenSq) {
+        R fromLenSq = from.lengthsq(), toLenSq = to.lengthsq(); // length^2
+        if(fromLenSq < toLenSq) { // l2 > l1
             if(fromLenSq < R(1e-16))
                 return;
             Vector<R, 3> mid = from * sqrt(toLenSq / fromLenSq) + to;
             R fac = 1. / sqrt(mid.lengthsq() * toLenSq);
-            r = (mid * to) * fac;
-            v = (mid % to) * fac;
+            r = (mid * to) * fac; // dot
+            v = (mid % to) * fac; // cross
         }
-        else {
+        else { // l1 >= l2
             if(toLenSq < R(1e-16))
                 return;
             Vector<R, 3> mid = from + to * sqrt(fromLenSq / toLenSq);
             R fac = 1. / sqrt(mid.lengthsq() * fromLenSq);
-            r = (from * mid) * fac;
-            v = (from % mid) * fac;
+            r = (from * mid) * fac; // cos(theta/2)
+            v = (from % mid) * fac; // sin(theta/2) * n
         }
     }
 

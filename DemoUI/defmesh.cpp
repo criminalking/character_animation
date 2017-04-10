@@ -63,7 +63,7 @@ vector<Transform<> > DefMesh::computeTransforms() const
   for(i = 1; i < (int)origSkel.fPrev().size(); ++i) { // 1-17
     int prevV = origSkel.fPrev()[i]; // fPrev here is index
     Transform<> cur = out[prevV];
-    cur = cur * Transform<>(match[prevV]) * Transform<>(transforms[i - 1]) * Transform<>(-match[prevV]); //TODO: ???
+    cur = cur * Transform<>(match[prevV]) * Transform<>(transforms[i - 1]) * Transform<>(-match[prevV]); //TODO: ??? here transforms has no value
 
     out.push_back(cur);
   }
@@ -74,13 +74,24 @@ vector<Transform<> > DefMesh::computeTransforms() const
 
 bool reallyDeform = true;
 
-const Mesh& DefMesh::getMesh2() // update for attachment
+void DefMesh::updateMesh2() // update for attachment
 {
+  vector<Vector3> pose = motion->getPose(); // joints of one frame
+  vector<Transform<> > t;
 
-
-
-  
-  return curMesh;
+  // compute every bone's transforms
+  // if this is the first frame, should remember its root
+  Vector3 root = motion->getRoot();
+  Vector3 trans = root - pose[0];
+  t[0] = Transform<>(trans); // R0's translation should add trans
+  for (int i = 1; i < origSkel.fPrev().size() - 1; ++i)
+    {
+      int prevV = origSkel.fPrev()[i];
+      Quaternion<> rot(match[i] - match[prevV], pose[i] - pose[prevV]);
+      Vector3 parent_new = t[prevV] * pose[i];
+      t[i] = Transform<>(rot, 1.0, parent_new - pose[i]);
+    }
+  curMesh = attachment.deform(origMesh, t); // normal LBS
 }
 
 void DefMesh::updateMesh() const // every frame should update mesh

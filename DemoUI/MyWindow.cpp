@@ -169,9 +169,10 @@ void MyWindow::draw() {
     if(floor)
         drawFloor();
 
+    bool useMyOwnTransform = true;
     vector<const Mesh *> ms(meshes.size());
     for(i = 0; i < (int)meshes.size(); ++i) { // size is 1(only one mesh in scene)
-      ms[i] = &(meshes[i]->getMesh()); // contains update mesh
+      ms[i] = &(meshes[i]->getMesh(useMyOwnTransform)); // contains update mesh
     }
 
     //shadows

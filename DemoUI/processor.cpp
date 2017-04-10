@@ -161,7 +161,7 @@ void process(const vector<string> &args, MyWindow *w)
   m.computeVertexNormals();
 
   Skeleton given = a.skeleton;
-  given.scale(a.skelScale * 0.7);
+  given.scale(a.skelScale * 0.1); // if remove this operate, no big difference
 
   if(a.stopAtMesh) { //if early bailout
     w->addMesh(new StaticDisplayMesh(m));

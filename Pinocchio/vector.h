@@ -86,7 +86,7 @@ public:
     Self normalize() const { return (*this) / length(); }
 
     int size() const { return Dim; }
-    
+
 private:
     template<class R, int D> friend class Vector;
     template<int WantedDim> void checkDim(const _VectorPrivate::VecOp<WantedDim> &) const {}
@@ -178,7 +178,7 @@ public:
     OPAS(/, Real)
 #undef OPAS
 
-    Real lengthsq() const { return (*this) * (*this); }
+    Real lengthsq() const { return (*this) * (*this); } // length^2
     Real length() const { return sqrt(lengthsq()); }
 
     Self normalize() const { return (*this) / length(); }
