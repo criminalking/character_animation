@@ -34,7 +34,7 @@ public:
     bool empty() const { return data.empty(); }
 
     vector<Transform<> > get() const { return data[getFrameIdx()]; }
-    vector<Vector3> getPose() const { return poses[getFrameIdx()]; }
+    vector<Vector3> getPose() const { return poses[0]; }
     vector<Vector3> getRefPose() const { return refPose; }
     double getLegLength() const { return legLength; }
     double getLegWidth() const { return legWidth; }

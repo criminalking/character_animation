@@ -89,7 +89,7 @@ void DefMesh::updateMesh2() // update for attachment
     {
       int prevV = origSkel.fPrev()[i];
       Quaternion<> rot(match[i] - match[prevV], pose[i] - pose[prevV]);
-      t.push_back(Transform<>(rot, 1.0, trans[prevV])); // t[i-1]
+      t.push_back(Transform<>(rot, 1, trans[prevV])); // t[i-1]
       joints.push_back(t.back() * match[i]); // child's new position
       trans.push_back(joints[i] - match[i]); // child's translation
     }
@@ -193,6 +193,7 @@ vector<Vector3> DefMesh::getSkel(bool useMyOwnTransform) const // final joints p
     }
   else
     {
+      //vector<Vector3> pose = motion->getPose(); // joints of one frame
       return joints;
     }
 }

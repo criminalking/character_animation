@@ -80,7 +80,7 @@ int MyWindow::handle(int event) {
             Transform<> cur = Transform<>(Vector3(0.5, 0.5, 0.5)) *
                     Transform<>(scale) *
                     Transform<>(Vector3(-0.5, -0.5, -0.5));
-                
+
             transform = cur * transform;
         }
         return 1;
@@ -226,9 +226,10 @@ void MyWindow::draw() {
             continue;
           glColor3d(.5, 0, 0);
 
-          const vector<int> &prev = human.fPrev(); // parent of every joint, makejoint decides
+          FileSkeleton file("joints.txt");
+          const vector<int> &prev = file.fPrev(); // parent of every joint, makejoint decides
           glBegin(GL_LINES);
-          for(int j = 1; j < (int)prev.size(); ++j) { // 1-18 (17 lines)
+          for(int j = 1; j < (int)prev.size(); ++j) {
             int k = prev[j];
             glVertex3d(v[j][0], v[j][1], v[j][2]); // connect joint and his parent
             glVertex3d(v[k][0], v[k][1], v[k][2]);
