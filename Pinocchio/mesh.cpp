@@ -249,16 +249,16 @@ void Mesh::readObj(istream &strm)
                 Debugging::out() << "Error on line " << lineNum << endl;
                 OUT;
             }
-            
+
             double x, y, z;
             sscanf(words[1].c_str(), "%lf", &x);
             sscanf(words[2].c_str(), "%lf", &y);
             sscanf(words[3].c_str(), "%lf", &z);
-            
+
             vertices.resize(vertices.size() + 1);
             vertices.back().pos = Vector3(x, y, z);
         }
-        
+
         if(words[0][0] == 'f') { // index of three vertices
             if(words.size() < 4 || words.size() > 15) {
                 Debugging::out() << "Error on line " << lineNum << endl;

@@ -20,6 +20,7 @@
 #define TRANSFORM_H
 
 #include "vector.h"
+#include <math.h>
 
 template<class Real = double>
 class Quaternion //normalized quaternion for representing rotations
@@ -55,7 +56,7 @@ public:
 
     //quaternion multiplication
     Quaternion operator*(const Quaternion &q) const { return Quaternion(r * q.r - v * q.v, r * q.v + q.r * v + v % q.v); }
-    
+
     //transforming a vector
     Vector<Real, 3> operator*(const Vector<Real, 3> &p) const
     {
@@ -63,9 +64,10 @@ public:
         Vector<Real, 3> vsq2 = v.apply(multiplies<Real>(), v2);
         Vector<Real, 3> rv2 = r * v2;
         Vector<Real, 3> vv2(v[1] * v2[2], v[0] * v2[2], v[0] * v2[1]);
-        return Vector<Real, 3>(p[0] * (Real(1.) - vsq2[1] - vsq2[2]) + p[1] * (vv2[2] - rv2[2]) + p[2] * (vv2[1] + rv2[1]),
+        Vector<Real, 3> result = Vector<Real, 3>(p[0] * (Real(1.) - vsq2[1] - vsq2[2]) + p[1] * (vv2[2] - rv2[2]) + p[2] * (vv2[1] + rv2[1]),
                                p[1] * (Real(1.) - vsq2[2] - vsq2[0]) + p[2] * (vv2[0] - rv2[0]) + p[0] * (vv2[2] + rv2[2]),
                                p[2] * (Real(1.) - vsq2[0] - vsq2[1]) + p[0] * (vv2[1] - rv2[1]) + p[1] * (vv2[0] + rv2[0]));
+        return result; // result and p have the same length
     }
 
     //equality
@@ -73,18 +75,18 @@ public:
     {
         return (r == oth.r && v == oth.v) || (r == -oth.r && v == -oth.v);
     }
-    
+
     Quaternion inverse() const { return Quaternion(-r, v); }
-    
+
     Real getAngle() const { return Real(2.) * atan2(v.length(), r); }
     Vector<Real, 3> getAxis() const { return v.normalize(); }
-    
+
     const Real &operator[](int i) const { return (i == 0) ? r : v[i - 1]; }
     void set(const Real &inR, const Vector<Real, 3> &inV) {
-        Real ratio = Real(1.) / sqrt(inR * inR + inV.lengthsq()); 
+        Real ratio = Real(1.) / sqrt(inR * inR + inV.lengthsq());
         r = inR * ratio; v = inV * ratio; //normalize
     }
-    
+
 private:
     Quaternion(const Real &inR, const Vector<Real, 3> &inV) : r(inR), v(inV) {}
 

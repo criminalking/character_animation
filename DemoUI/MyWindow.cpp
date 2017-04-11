@@ -282,7 +282,7 @@ void MyWindow::drawMesh(const Mesh &m, bool flatShading, Vector3 trans)
             glNormal3d(normal[0], normal[1], normal[2]);
         }
 
-        glVertex3d(p[0] + trans[0], p[1] + trans[1], p[2] + trans[2]);
+        glVertex3d(p[0] + trans[0], p[1] + trans[1], p[2] + trans[2]); // trans = [0,0,0]
     }
     glEnd();
 }

@@ -168,7 +168,7 @@ public:
                     rhs[i] = H[i] / D[i];
             }
 
-            Ainv->solve(rhs);           
+            Ainv->solve(rhs);
             for(i = 0; i < nv; ++i) {
                 if(rhs[i] > 1.)
                     rhs[i] = 1.; //clip just in case
@@ -204,7 +204,7 @@ public:
             Vector3 newPos;
             int j;
             for(j = 0; j < (int)nzweights[i].size(); ++j) { // LBS
-              newPos += ((transforms[nzweights[i][j].first] * out.vertices[i].pos) * nzweights[i][j].second); // nzweights:(bone's index, bone's weight)
+              newPos += ((transforms[nzweights[i][j].first] * out.vertices[i].pos) * nzweights[i][j].second); // nzweights:(bone's index, bone's weight), .pos is a vertex
             }
             out.vertices[i].pos = newPos;
         }

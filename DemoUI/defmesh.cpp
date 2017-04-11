@@ -83,17 +83,28 @@ void DefMesh::updateMesh2() // update for attachment
   // if this is the first frame, should remember its root
   Vector3 root = motion->getRoot();
   vector<Vector3> trans; // translation of joints
-  trans.push_back((root - pose[0])*1); // trans[0]
-  joints.push_back(match[0] + root - pose[0]); // joints[0]
+  trans.push_back(root - pose[0]); // trans[0]
+  joints.push_back(match[0] + trans[0]); // joints[0]
   for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {
       int prevV = origSkel.fPrev()[i];
-      Quaternion<> rot(match[i] - match[prevV], pose[i] - pose[prevV]);
+      Quaternion<> rot(match[i] - match[prevV], pose[i] - pose[prevV]); // need transfer bone: match[i] - match[prevV]
+
       t.push_back(Transform<>(rot, 1, trans[prevV])); // t[i-1]
-      joints.push_back(t.back() * match[i]); // child's new position
+      joints.push_back(t.back().getRot() * (match[i]-match[prevV]) + match[prevV] + t.back().getTrans()); // child's new position
       trans.push_back(joints[i] - match[i]); // child's translation
     }
   curMesh = attachment.deform(origMesh, t); // normal LBS
+  // for(int i = 1; i< 17; ++i)
+  //   {
+  //     std::cout << (match[i]-match[origSkel.fPrev()[i]]).length() << " ";
+  //   }
+  // std::cout << std::endl;
+  // for(int i = 1; i< 17; ++i)
+  //   {
+  //     std::cout << (joints[i]-joints[origSkel.fPrev()[i]]).length() << " ";
+  //   }
+  // std::cout << std::endl;
 }
 
 void DefMesh::updateMesh() const // every frame should update mesh
