@@ -146,7 +146,7 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[transfer[i]][0] = cur;
+          nums[transfer[i]][0] = -cur;
         }
       }
     else if (lineNum % 3 == 2) // y
@@ -162,7 +162,7 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
         for(int i = 0; i < (int)words.size(); ++i) {
           double cur;
           sscanf(words[i].c_str(), "%lf", &cur);
-          nums[transfer[i]][2] = cur;
+          nums[transfer[i]][2] = -cur;
         }
         for (int i = 0; i < (int)words.size(); ++i) {
           poses.back().push_back(nums[i]);
@@ -181,8 +181,6 @@ void Motion::readMotion(istream &strm) // every three rows: x z y, 17 cols
   }
   // remember first frame's root
   root = poses[0][0];
-  for (int i = 0; i < poses[0].size(); ++i)
-    std::cout << poses[0][i] << std::endl;
 }
 
 
