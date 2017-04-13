@@ -103,7 +103,7 @@ ArgData processArgs(const vector<string> &args)
       sscanf(args[cur++].c_str(), "%lf", &z);
       sscanf(args[cur++].c_str(), "%lf", &deg);
 
-      out.meshTransform = Quaternion<>(Vector3(x, y, z), deg * M_PI / 180.) * out.meshTransform;
+      out.meshTransform = Quaternion<>(Vector3(x, y, z), deg * M_PI / 180.) * out.meshTransform; // (x,y,z) is the axis
       continue;
     }
     if(curStr == string("-scale")) {
@@ -161,7 +161,7 @@ void process(const vector<string> &args, MyWindow *w)
   m.computeVertexNormals();
 
   Skeleton given = a.skeleton;
-  given.scale(a.skelScale * 0.1); // if remove this operate, no big difference
+  given.scale(a.skelScale * 0.5); // if remove this operate, no big difference
 
   if(a.stopAtMesh) { //if early bailout
     w->addMesh(new StaticDisplayMesh(m));

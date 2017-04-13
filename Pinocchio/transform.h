@@ -22,6 +22,93 @@
 #include "vector.h"
 #include <math.h>
 
+template<class Real = double> class Matrix3 {
+public:
+    typedef Vector<Real, 3> Vec;
+    typedef Matrix3<Real> Self;
+
+    Matrix3(const Real &diag = Real()) { m[0] = m[4] = m[8] = diag; m[1] = m[2] = m[3] = m[5] = m[6] = m[7] = Real(); }
+    Matrix3(const Vec &c1, const Vec &c2, const Vec &c3) {
+        m[0] = c1[0]; m[1] = c2[0]; m[2] = c3[0];
+        m[3] = c1[1]; m[4] = c2[1]; m[5] = c3[1];
+        m[6] = c1[2]; m[7] = c2[2]; m[8] = c3[2];
+    }
+    Matrix3(const Self &inM) { for(int i = 0; i < 9; ++i) m[i] = inM[i]; }
+
+    Real &operator[](int idx) { return m[idx]; }
+    const Real &operator[](int idx) const { return m[idx]; }
+    Real &operator()(int row, int col) { return m[row * 3 + col]; }
+    const Real &operator()(int row, int col) const { return m[row * 3 + col]; }
+
+    Vec getRow(int row) const { row *= 3; return Vec(m[row], m[row + 1], m[row + 2]); }
+    Vec getColumn(int col) const { return Vec(m[col], m[col + 3], m[col + 6]); }
+
+    Self operator+(const Self &o) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] + o[i]; return out; }
+    Self operator-(const Self &o) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] - o[i]; return out; }
+    Self operator*(const Real &x) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] * x; return out; }
+    Self operator/(const Real &x) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] / x; return out; }
+
+#define OPAS(op, typ, idx) Self &operator op(const typ &x) { for(int i = 0; i < 9; ++i) m[i] op x idx; return *this; }
+    OPAS(+=, Self, [i])
+    OPAS(-=, Self, [i])
+    OPAS(*=, Real, )
+    OPAS(/=, Real, )
+#undef OPAS
+
+    Vec operator*(const Vec &v) const {
+        return Vec(m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+                   m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+                   m[6] * v[0] + m[7] * v[1] + m[8] * v[2]);
+    }
+
+    Self operator*(const Self &o) const {
+        return Self((*this) * Vec(o[0], o[3], o[6]), (*this) * Vec(o[1], o[4], o[7]), (*this) * Vec(o[2], o[5], o[8]));
+    }
+
+    Self operator~() const { //transpose
+        Self out(S(0)); //uninitialized
+        out[0] = m[0]; out[4] = m[4]; out[8] = m[8];
+        out[1] = m[3]; out[3] = m[1]; out[2] = m[6]; out[6] = m[2]; out[5] = m[7]; out[7] = m[5];
+        return out;
+    }
+
+    Self operator!() const { //invert
+        Self out(S(0));
+        Real d = det();
+        if(d == Real())
+            return Self();
+        d = Real(1.) / d;
+        out[0] = d * (m[4] * m[8] - m[5] * m[7]);
+        out[1] = d * (m[2] * m[7] - m[1] * m[8]);
+        out[2] = d * (m[1] * m[5] - m[2] * m[4]);
+        out[3] = d * (m[5] * m[6] - m[3] * m[8]);
+        out[4] = d * (m[0] * m[8] - m[2] * m[6]);
+        out[5] = d * (m[2] * m[3] - m[0] * m[5]);
+        out[6] = d * (m[3] * m[7] - m[4] * m[6]);
+        out[7] = d * (m[1] * m[6] - m[0] * m[7]);
+        out[8] = d * (m[0] * m[4] - m[1] * m[3]);
+        return out;
+    }
+
+    Real det() const
+    { return m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]); }
+
+private:
+    struct S { S(int) { } };
+    Matrix3(const S &) { } //no initialization
+
+    Real m[9];
+};
+
+template <class charT, class traits, class Real>
+        basic_ostream<charT,traits>& operator<<(basic_ostream<charT,traits>& os, const Matrix3<Real> &m)
+{
+    os << "[[" << m[0] << "," << m[1] << "," << m[2] << "]";
+    os << "[" << m[3] << "," << m[4] << "," << m[5] << "]";
+    os << "[" << m[6] << "," << m[7] << "," << m[8] << "]]";
+    return os;
+}
+
 template<class Real = double>
 class Quaternion //normalized quaternion for representing rotations
 {
@@ -29,6 +116,36 @@ public:
     //constructors
     Quaternion() : r(1.) { } //initialize to identity
     Quaternion(const Quaternion &q) : r(q.r), v(q.v) {} //copy constructor
+    template<class R> Quaternion(const Matrix3<R> &a) { // convert matrix to quaternion
+      float trace = a[0][0] + a[1][1] + a[2][2]; // I removed + 1.0f; see discussion with Ethan
+      if( trace > 0 ) {// I changed M_EPSILON to 0
+        float s = 0.5f / sqrtf(trace + 1.0f);
+        r = 0.25f / s;
+        v[0] = ( a[2][1] - a[1][2] ) * s;
+        v[1] = ( a[0][2] - a[2][0] ) * s;
+        v[2] = ( a[1][0] - a[0][1] ) * s;
+      } else {
+        if ( a[0][0] > a[1][1] && a[0][0] > a[2][2] ) {
+          float s = 2.0f * sqrtf( 1.0f + a[0][0] - a[1][1] - a[2][2]);
+          r = (a[2][1] - a[1][2] ) / s;
+          v[0] = 0.25f * s;
+          v[1] = (a[0][1] + a[1][0] ) / s;
+          v[2] = (a[0][2] + a[2][0] ) / s;
+        } else if (a[1][1] > a[2][2]) {
+          float s = 2.0f * sqrtf( 1.0f + a[1][1] - a[0][0] - a[2][2]);
+          r = (a[0][2] - a[2][0] ) / s;
+          v[0] = (a[0][1] + a[1][0] ) / s;
+          v[1] = 0.25f * s;
+          v[2] = (a[1][2] + a[2][1] ) / s;
+        } else {
+          float s = 2.0f * sqrtf( 1.0f + a[2][2] - a[0][0] - a[1][1] );
+          r = (a[1][0] - a[0][1] ) / s;
+          v[0] = (a[0][2] + a[2][0] ) / s;
+          v[1] = (a[1][2] + a[2][1] ) / s;
+          v[2] = 0.25f * s;
+        }
+      }
+    }
     template<class R> Quaternion(const Quaternion<R> &q) : r(q.r), v(q.v) {} //convert quaternions of other types
     //axis angle constructor:
     template<class R> Quaternion(const Vector<R, 3> &axis, const R &angle) : r(cos(angle * Real(0.5))), v(sin(angle * Real(0.5)) * axis.normalize()) {}
@@ -105,7 +222,7 @@ template<class Real = double> class Transform { //T(v) = (rot * v * scale) + tra
  Transform(const Transform &t) : rot(t.rot), scale(t.scale), trans(t.trans) {}
 
  Transform operator*(const Transform &t) const { return Transform(rot * t.rot, scale * t.scale, trans + rot * (scale * t.trans)); }
- Vec operator*(const Vec &v) const { return rot * (v * scale) + trans; }
+ Vec operator*(const Vec &v) const { return rot * (v * scale) + trans; } // first rot and then trans
 
  Transform inverse() const { return Transform(rot.inverse(), 1. / scale, rot.inverse() * -trans * (1. / scale)); } // trans's inverse is not -trans here, because if we use this new transform, we still put this trans at last
 
@@ -121,92 +238,5 @@ template<class Real = double> class Transform { //T(v) = (rot * v * scale) + tra
  Real scale;
  Vec trans;
 };
-
-template<class Real = double> class Matrix3 {
-public:
-    typedef Vector<Real, 3> Vec;
-    typedef Matrix3<Real> Self;
-
-    Matrix3(const Real &diag = Real()) { m[0] = m[4] = m[8] = diag; m[1] = m[2] = m[3] = m[5] = m[6] = m[7] = Real(); }
-    Matrix3(const Vec &c1, const Vec &c2, const Vec &c3) {
-        m[0] = c1[0]; m[1] = c2[0]; m[2] = c3[0];
-        m[3] = c1[1]; m[4] = c2[1]; m[5] = c3[1];
-        m[6] = c1[2]; m[7] = c2[2]; m[8] = c3[2];
-    }
-    Matrix3(const Self &inM) { for(int i = 0; i < 9; ++i) m[i] = inM[i]; }
-
-    Real &operator[](int idx) { return m[idx]; }
-    const Real &operator[](int idx) const { return m[idx]; }
-    Real &operator()(int row, int col) { return m[row * 3 + col]; }
-    const Real &operator()(int row, int col) const { return m[row * 3 + col]; }
-
-    Vec getRow(int row) const { row *= 3; return Vec(m[row], m[row + 1], m[row + 2]); }
-    Vec getColumn(int col) const { return Vec(m[col], m[col + 3], m[col + 6]); }
-
-    Self operator+(const Self &o) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] + o[i]; return out; }
-    Self operator-(const Self &o) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] - o[i]; return out; }
-    Self operator*(const Real &x) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] * x; return out; }
-    Self operator/(const Real &x) { Self out(S(0)); for(int i = 0; i < 9; ++i) out[i] = m[i] / x; return out; }
-
-#define OPAS(op, typ, idx) Self &operator op(const typ &x) { for(int i = 0; i < 9; ++i) m[i] op x idx; return *this; }
-    OPAS(+=, Self, [i])
-    OPAS(-=, Self, [i])
-    OPAS(*=, Real, )
-    OPAS(/=, Real, )
-#undef OPAS
-
-    Vec operator*(const Vec &v) const {
-        return Vec(m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
-                   m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
-                   m[6] * v[0] + m[7] * v[1] + m[8] * v[2]);
-    }
-
-    Self operator*(const Self &o) const {
-        return Self((*this) * Vec(o[0], o[3], o[6]), (*this) * Vec(o[1], o[4], o[7]), (*this) * Vec(o[2], o[5], o[8]));
-    }
-
-    Self operator~() const { //transpose
-        Self out(S(0)); //uninitialized
-        out[0] = m[0]; out[4] = m[4]; out[8] = m[8];
-        out[1] = m[3]; out[3] = m[1]; out[2] = m[6]; out[6] = m[2]; out[5] = m[7]; out[7] = m[5];
-        return out;
-    }
-
-    Self operator!() const { //invert
-        Self out(S(0));
-        Real d = det();
-        if(d == Real())
-            return Self();
-        d = Real(1.) / d;
-        out[0] = d * (m[4] * m[8] - m[5] * m[7]);
-        out[1] = d * (m[2] * m[7] - m[1] * m[8]);
-        out[2] = d * (m[1] * m[5] - m[2] * m[4]);
-        out[3] = d * (m[5] * m[6] - m[3] * m[8]);
-        out[4] = d * (m[0] * m[8] - m[2] * m[6]);
-        out[5] = d * (m[2] * m[3] - m[0] * m[5]);
-        out[6] = d * (m[3] * m[7] - m[4] * m[6]);
-        out[7] = d * (m[1] * m[6] - m[0] * m[7]);
-        out[8] = d * (m[0] * m[4] - m[1] * m[3]);
-        return out;
-    }
-    
-    Real det() const
-    { return m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6]) + m[2] * (m[3] * m[7] - m[4] * m[6]); }
-    
-private:
-    struct S { S(int) { } };
-    Matrix3(const S &) { } //no initialization
-    
-    Real m[9];
-};
-
-template <class charT, class traits, class Real>
-        basic_ostream<charT,traits>& operator<<(basic_ostream<charT,traits>& os, const Matrix3<Real> &m)
-{
-    os << "[[" << m[0] << "," << m[1] << "," << m[2] << "]";
-    os << "[" << m[3] << "," << m[4] << "," << m[5] << "]";
-    os << "[" << m[6] << "," << m[7] << "," << m[8] << "]]";
-    return os;
-}
 
 #endif

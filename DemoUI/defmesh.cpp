@@ -76,6 +76,7 @@ bool reallyDeform = true;
 
 void DefMesh::updateMesh2() // update for attachment
 {
+#if 1
   vector<Vector3> pose = motion->getPose(); // joints of one frame
   vector<Transform<> > t; // t.size() = joints' size - 1
   joints.clear();
@@ -83,7 +84,7 @@ void DefMesh::updateMesh2() // update for attachment
   // if this is the first frame, should remember its root
   Vector3 root = motion->getRoot();
   vector<Vector3> trans; // translation of joints
-  trans.push_back(root - pose[0]); // trans[0], TODO: how to get root's trans???
+  trans.push_back((root - pose[0])*0.1); // trans[0], TODO: how to get root's trans???
   joints.push_back(match[0] + trans[0]); // joints[0]
   for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {
@@ -94,6 +95,34 @@ void DefMesh::updateMesh2() // update for attachment
       trans.push_back(joints[i] - match[i]); // child's translation
     }
   curMesh = attachment.deform(origMesh, t); // normal LBS
+#endif
+  // world coordinate is now 'model coordinate'
+  // create local coordinate Matrix for every joint
+
+
+  // vector<Matrix3<> > coordinate; // size() = joints' size
+  // coordinate.push_back(Transform<>(match[0])); // root only have translation
+  // for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
+  //   {
+  //     int prevV = origSkel.fPrev()[i];
+  //     Vector3 x = (match[prevV] - match[i]).normalize(); // x axis
+  //     Vector3 y = Quaternion<>(Vector3(0,0,1), 90 * M_PI / 180.) * x;
+  //     Vector3 z = (x % y).normalize();
+  //     y = (z % x).normalize(); // R = [x y z]T
+  //     Quaternion<> rot(Quaternion<>(Vector3(match[4]-match[3]), 60 * M_PI / 180.));
+  //     coordinate.push_back(Transform<>(rot, 1.0, match[i])); // no scale
+  //   }
+
+
+  // // compute transform from local coordinate and world coordinate
+  // vector<Transform<> > t; // t.size() = joints' size - 1
+  // Quaternion<> rot(Quaternion<>(Vector3(match[4]-match[3]), 60 * M_PI / 180.));
+  // for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
+  //   {
+  //     if (i==4) t.push_back(Transform<>(rot));
+  //     else t.push_back(Transform<>());
+  //   }
+  // curMesh = attachment.deform(origMesh, t); // normal LBS
 }
 
 void DefMesh::updateMesh() const // every frame should update mesh
