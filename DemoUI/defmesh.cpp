@@ -76,7 +76,7 @@ bool reallyDeform = true;
 
 void DefMesh::updateMesh2() // update for attachment
 {
-#if 1
+#if 0
   vector<Vector3> pose = motion->getPose(); // joints of one frame
   vector<Transform<> > t; // t.size() = joints' size - 1
   joints.clear();
@@ -98,23 +98,37 @@ void DefMesh::updateMesh2() // update for attachment
 #endif
   // world coordinate is now 'model coordinate'
   // create local coordinate Matrix for every joint
+  vector<Matrix3<> > rotation; // every joint's rotation
+  vector<Vector3> translation; // every joint's translation
+  rotation.push_back(Matrix3<>()); // root doesn't has rotation
+  translation.push_back(match[0]); // root's translation
+  for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
+    {
+      int prevV = origSkel.fPrev()[i];
+      Vector3 x = (match[prevV] - match[i]).normalize(); // x axis
+      Vector3 y = Quaternion<>(Vector3(0,0,1), 90 * M_PI / 180.) * x;
+      Vector3 z = (x % y).normalize(); // z axis
+      y = (z % x).normalize(); // y axis
+      Matrix3<> m(x,y,z); // R = [x y z]T
+      rotation.push_back(~m);
+      translation.push_back(match[i]);
+    }
+  // compute transform from local coordinate and its parent coordinate, we have child coordinate, convert to parent coordinate, v_p = T * v_c
+  vector<Transform<> > transformParent;
+  transformParent.push_back(Transform<>(Quaternion<>(), 1.0, translation[0])); // root, rotation is identity
+  for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
+    {
+      int prevV = origSkel.fPrev()[i];
+      Matrix3<> m = rotation[prevV]*(!rotation[i]);
+      transformParent.push_back(Transform<>(Quaternion<>(m), 1.0, rotation[prevV]*(translation[i]-translation[prevV]))); // rotation = Rp * Rc^{-1}, translation = Rp * (tc-tp)
+    }
 
+  vector<Transform<> > transformChild; // transform of child self
+  for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
+    {
 
-  // vector<Matrix3<> > coordinate; // size() = joints' size
-  // coordinate.push_back(Transform<>(match[0])); // root only have translation
-  // for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
-  //   {
-  //     int prevV = origSkel.fPrev()[i];
-  //     Vector3 x = (match[prevV] - match[i]).normalize(); // x axis
-  //     Vector3 y = Quaternion<>(Vector3(0,0,1), 90 * M_PI / 180.) * x;
-  //     Vector3 z = (x % y).normalize();
-  //     y = (z % x).normalize(); // R = [x y z]T
-  //     Quaternion<> rot(Quaternion<>(Vector3(match[4]-match[3]), 60 * M_PI / 180.));
-  //     coordinate.push_back(Transform<>(rot, 1.0, match[i])); // no scale
-  //   }
+    }
 
-
-  // // compute transform from local coordinate and world coordinate
   // vector<Transform<> > t; // t.size() = joints' size - 1
   // Quaternion<> rot(Quaternion<>(Vector3(match[4]-match[3]), 60 * M_PI / 180.));
   // for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)

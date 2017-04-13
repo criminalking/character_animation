@@ -116,32 +116,35 @@ public:
     //constructors
     Quaternion() : r(1.) { } //initialize to identity
     Quaternion(const Quaternion &q) : r(q.r), v(q.v) {} //copy constructor
-    template<class R> Quaternion(const Matrix3<R> &a) { // convert matrix to quaternion
-      float trace = a[0][0] + a[1][1] + a[2][2]; // I removed + 1.0f; see discussion with Ethan
+    template<class R> Quaternion(const Matrix3<R> &a) { // convert matrix to quaternion, matrix should be orthogonal && |a| = +1
+      float trace = a[0] + a[4] + a[8]; // I removed + 1.0f; see discussion with Ethan
       if( trace > 0 ) {// I changed M_EPSILON to 0
         float s = 0.5f / sqrtf(trace + 1.0f);
         r = 0.25f / s;
-        v[0] = ( a[2][1] - a[1][2] ) * s;
-        v[1] = ( a[0][2] - a[2][0] ) * s;
-        v[2] = ( a[1][0] - a[0][1] ) * s;
-      } else {
-        if ( a[0][0] > a[1][1] && a[0][0] > a[2][2] ) {
-          float s = 2.0f * sqrtf( 1.0f + a[0][0] - a[1][1] - a[2][2]);
-          r = (a[2][1] - a[1][2] ) / s;
+        v[0] = ( a[7] - a[5] ) * s;
+        v[1] = ( a[2] - a[6] ) * s;
+        v[2] = ( a[3] - a[1] ) * s;
+      }
+      else {
+        if ( a[0] > a[4] && a[0] > a[8] ) {
+          float s = 2.0f * sqrtf( 1.0f + a[0] - a[4] - a[8]);
+          r = (a[7] - a[5] ) / s;
           v[0] = 0.25f * s;
-          v[1] = (a[0][1] + a[1][0] ) / s;
-          v[2] = (a[0][2] + a[2][0] ) / s;
-        } else if (a[1][1] > a[2][2]) {
-          float s = 2.0f * sqrtf( 1.0f + a[1][1] - a[0][0] - a[2][2]);
-          r = (a[0][2] - a[2][0] ) / s;
-          v[0] = (a[0][1] + a[1][0] ) / s;
+          v[1] = (a[1] + a[3] ) / s;
+          v[2] = (a[2] + a[6] ) / s;
+        }
+        else if (a[4] > a[8]) {
+          float s = 2.0f * sqrtf( 1.0f + a[4] - a[0] - a[8]);
+          r = (a[2] - a[6] ) / s;
+          v[0] = (a[1] + a[3] ) / s;
           v[1] = 0.25f * s;
-          v[2] = (a[1][2] + a[2][1] ) / s;
-        } else {
-          float s = 2.0f * sqrtf( 1.0f + a[2][2] - a[0][0] - a[1][1] );
-          r = (a[1][0] - a[0][1] ) / s;
-          v[0] = (a[0][2] + a[2][0] ) / s;
-          v[1] = (a[1][2] + a[2][1] ) / s;
+          v[2] = (a[5] + a[7] ) / s;
+        }
+        else {
+          float s = 2.0f * sqrtf( 1.0f + a[8] - a[0] - a[4] );
+          r = (a[3] - a[1] ) / s;
+          v[0] = (a[2] + a[6] ) / s;
+          v[1] = (a[5] + a[7] ) / s;
           v[2] = 0.25f * s;
         }
       }
