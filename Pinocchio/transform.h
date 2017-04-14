@@ -175,19 +175,23 @@ public:
     }
 
     //quaternion multiplication
-Quaternion operator*(const Quaternion &q) const { if (abs(v[0]) < 1e-6 && abs(v[1]) < 1e-6 && abs(v[2]) < 1e-6) return Quaternion(0, Vector3(0.0,0.0,0.0)); else return Quaternion(r * q.r - v * q.v, r * q.v + q.r * v + v % q.v); } // if axis is (0,0,0), means no rotation
+Quaternion operator*(const Quaternion &q) const { Quaternion qua(r * q.r - v * q.v, r * q.v + q.r * v + v % q.v); Vector3 quaV = qua.getV(); if (abs(quaV[0]) < 1e-6 && abs(quaV[1]) < 1e-6 && abs(quaV[2]) < 1e-6) return Quaternion(0.0, Vector3(0.0,0.0,0.0)); else return qua;} // if axis is (0,0,0), means no rotation
 
     //transforming a vector
     Vector<Real, 3> operator*(const Vector<Real, 3> &p) const
     {
-        Vector<Real, 3> v2 = v + v;
-        Vector<Real, 3> vsq2 = v.apply(multiplies<Real>(), v2);
-        Vector<Real, 3> rv2 = r * v2;
-        Vector<Real, 3> vv2(v[1] * v2[2], v[0] * v2[2], v[0] * v2[1]);
-        Vector<Real, 3> result = Vector<Real, 3>(p[0] * (Real(1.) - vsq2[1] - vsq2[2]) + p[1] * (vv2[2] - rv2[2]) + p[2] * (vv2[1] + rv2[1]),
-                               p[1] * (Real(1.) - vsq2[2] - vsq2[0]) + p[2] * (vv2[0] - rv2[0]) + p[0] * (vv2[2] + rv2[2]),
-                               p[2] * (Real(1.) - vsq2[0] - vsq2[1]) + p[0] * (vv2[1] - rv2[1]) + p[1] * (vv2[0] + rv2[0]));
-        return result; // result and p have the same length
+      if (abs(v[0]) < 1e-6 && abs(v[1]) < 1e-6 && abs(v[2]) < 1e-6) return p; // (0,0,0) no rotation
+      else
+        {
+          Vector<Real, 3> v2 = v + v;
+          Vector<Real, 3> vsq2 = v.apply(multiplies<Real>(), v2);
+          Vector<Real, 3> rv2 = r * v2;
+          Vector<Real, 3> vv2(v[1] * v2[2], v[0] * v2[2], v[0] * v2[1]);
+          Vector<Real, 3> result = Vector<Real, 3>(p[0] * (Real(1.) - vsq2[1] - vsq2[2]) + p[1] * (vv2[2] - rv2[2]) + p[2] * (vv2[1] + rv2[1]),
+                                                   p[1] * (Real(1.) - vsq2[2] - vsq2[0]) + p[2] * (vv2[0] - rv2[0]) + p[0] * (vv2[2] + rv2[2]),
+                                                   p[2] * (Real(1.) - vsq2[0] - vsq2[1]) + p[0] * (vv2[1] - rv2[1]) + p[1] * (vv2[0] + rv2[0]));
+          return result; // result and p have the same length
+        }
     }
 
     //equality
@@ -196,10 +200,14 @@ Quaternion operator*(const Quaternion &q) const { if (abs(v[0]) < 1e-6 && abs(v[
         return (r == oth.r && v == oth.v) || (r == -oth.r && v == -oth.v);
     }
 
-    Quaternion inverse() const { return Quaternion(-r, v); }
+Quaternion inverse() const { if (abs(v[0]) < 1e-6 && abs(v[1]) < 1e-6 && abs(v[2]) < 1e-6) return Quaternion(0.0, v); else
+        return Quaternion(-r, v); }
 
     Real getAngle() const { return Real(2.) * atan2(v.length(), r); }
     Vector<Real, 3> getAxis() const { if (abs(v[0]) < 1e-6 && abs(v[1]) < 1e-6 && abs(v[2]) < 1e-6) return Vector3(0.0,0.0,0.0); else return v.normalize(); }
+
+    Real getR() const { return r; }
+    Vector<Real, 3> getV() const { return v; }
 
     const Real &operator[](int i) const { return (i == 0) ? r : v[i - 1]; }
     void set(const Real &inR, const Vector<Real, 3> &inV) {

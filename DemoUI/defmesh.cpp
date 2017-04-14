@@ -135,18 +135,24 @@ void DefMesh::updateMesh2() // update for attachment
 
   // compute final transform, from a model point(world point) to
   vector<Transform<> > t; // size is joint's size
-  vector<Transform<> > Aj;
-  Aj.push_back(transformParent[0].inverse()); // root: T0^{-1}
   vector<Transform<> > Fj;
-  Fj.push_back(transformParent[0]); // root: T0R0
-  t.push_back(Fj.back() * Aj.back());
-  std::cout << t.back().getTrans() << " " << t.back().getRot().getAngle() << " " << t.back().getRot().getAxis() << std::endl;
+  Fj.push_back(transformParent[0] * transformChild[0]);
+  t.push_back(Fj[0] * transformParent[0].inverse());
+  std::cout << t.back().getTrans() << " " << t.back().getRot().getR() << " " << t.back().getRot().getV() << std::endl;
+  Transform<> Tj;
   for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {
       int prevV = origSkel.fPrev()[i];
-      Fj.push_back(Fj[prevV] * Transform<>(transformParent[i] * transformChild[i]));
-      Aj.push_back(Transform<>(transformParent[i].inverse()) * Aj[prevV]);
-      t.push_back(Fj.back() * Aj.back());
+      Fj.push_back(Fj[prevV] * transformParent[i] * transformChild[i]);// * transformChild[i]);
+      Tj = Fj.back() * transformParent[i].inverse();
+      while (prevV != 0)
+        {
+          Tj = Tj * transformParent[prevV].inverse();
+          prevV = origSkel.fPrev()[prevV];
+        }
+      Tj = Tj * transformParent[0].inverse();
+      t.push_back(Tj);
+      std::cout << t.back().getTrans() << " " << t.back().getRot().getR() << " " << t.back().getRot().getV() << std::endl;
     }
   t.erase(t.begin()); // delete t[0]
 
