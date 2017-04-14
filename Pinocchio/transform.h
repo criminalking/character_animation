@@ -114,7 +114,7 @@ class Quaternion //normalized quaternion for representing rotations
 {
 public:
     //constructors
-    Quaternion() : r(1.) { } //initialize to identity
+ Quaternion() : r(1.), v(0., 0., 0.) { } //initialize to identity
     Quaternion(const Quaternion &q) : r(q.r), v(q.v) {} //copy constructor
     template<class R> Quaternion(const Matrix3<R> &a) { // convert matrix to quaternion, matrix should be orthogonal && |a| = +1
       float trace = a[0] + a[4] + a[8]; // I removed + 1.0f; see discussion with Ethan
@@ -175,7 +175,7 @@ public:
     }
 
     //quaternion multiplication
-    Quaternion operator*(const Quaternion &q) const { return Quaternion(r * q.r - v * q.v, r * q.v + q.r * v + v % q.v); }
+Quaternion operator*(const Quaternion &q) const { if (abs(v[0]) < 1e-6 && abs(v[1]) < 1e-6 && abs(v[2]) < 1e-6) return Quaternion(0, Vector3(0.0,0.0,0.0)); else return Quaternion(r * q.r - v * q.v, r * q.v + q.r * v + v % q.v); } // if axis is (0,0,0), means no rotation
 
     //transforming a vector
     Vector<Real, 3> operator*(const Vector<Real, 3> &p) const
@@ -199,7 +199,7 @@ public:
     Quaternion inverse() const { return Quaternion(-r, v); }
 
     Real getAngle() const { return Real(2.) * atan2(v.length(), r); }
-    Vector<Real, 3> getAxis() const { return v.normalize(); }
+    Vector<Real, 3> getAxis() const { if (abs(v[0]) < 1e-6 && abs(v[1]) < 1e-6 && abs(v[2]) < 1e-6) return Vector3(0.0,0.0,0.0); else return v.normalize(); }
 
     const Real &operator[](int i) const { return (i == 0) ? r : v[i - 1]; }
     void set(const Real &inR, const Vector<Real, 3> &inV) {

@@ -95,7 +95,7 @@ void DefMesh::updateMesh2() // update for attachment
       trans.push_back(joints[i] - match[i]); // child's translation
     }
   curMesh = attachment.deform(origMesh, t); // normal LBS
-#endif
+#else
   // world coordinate is now 'model coordinate'
   // create local coordinate Matrix for every joint
   vector<Matrix3<> > rotation; // every joint's rotation
@@ -113,8 +113,9 @@ void DefMesh::updateMesh2() // update for attachment
       rotation.push_back(~m);
       translation.push_back(match[i]);
     }
+
   // compute transform from local coordinate and its parent coordinate, we have child coordinate, convert to parent coordinate, v_p = T * v_c
-  vector<Transform<> > transformParent;
+  vector<Transform<> > transformParent; // size is joint's size
   transformParent.push_back(Transform<>(Quaternion<>(), 1.0, translation[0])); // root, rotation is identity
   for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {
@@ -123,20 +124,34 @@ void DefMesh::updateMesh2() // update for attachment
       transformParent.push_back(Transform<>(Quaternion<>(m), 1.0, rotation[prevV]*(translation[i]-translation[prevV]))); // rotation = Rp * Rc^{-1}, translation = Rp * (tc-tp)
     }
 
-  vector<Transform<> > transformChild; // transform of child self
+  // transform of child self
+  vector<Transform<> > transformChild;
+  for (int i = 0; i < (int)origSkel.fPrev().size(); ++i)
+    {
+      transformChild.push_back(Transform<>()); // no transform
+    }
+  //Quaternion<> rot(Quaternion<>(Vector3(match[4]-match[3]), 60 * M_PI / 180.));
+  //transformChild[3] = Transform<>(rot);
+
+  // compute final transform, from a model point(world point) to
+  vector<Transform<> > t; // size is joint's size
+  vector<Transform<> > Aj;
+  Aj.push_back(transformParent[0].inverse()); // root: T0^{-1}
+  vector<Transform<> > Fj;
+  Fj.push_back(transformParent[0]); // root: T0R0
+  t.push_back(Fj.back() * Aj.back());
+  std::cout << t.back().getTrans() << " " << t.back().getRot().getAngle() << " " << t.back().getRot().getAxis() << std::endl;
   for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
     {
-
+      int prevV = origSkel.fPrev()[i];
+      Fj.push_back(Fj[prevV] * Transform<>(transformParent[i] * transformChild[i]));
+      Aj.push_back(Transform<>(transformParent[i].inverse()) * Aj[prevV]);
+      t.push_back(Fj.back() * Aj.back());
     }
+  t.erase(t.begin()); // delete t[0]
 
-  // vector<Transform<> > t; // t.size() = joints' size - 1
-  // Quaternion<> rot(Quaternion<>(Vector3(match[4]-match[3]), 60 * M_PI / 180.));
-  // for (int i = 1; i < (int)origSkel.fPrev().size(); ++i)
-  //   {
-  //     if (i==4) t.push_back(Transform<>(rot));
-  //     else t.push_back(Transform<>());
-  //   }
-  // curMesh = attachment.deform(origMesh, t); // normal LBS
+  curMesh = attachment.deform(origMesh, t); // normal LBS, here t is bone's size
+#endif
 }
 
 void DefMesh::updateMesh() const // every frame should update mesh
